@@ -60,6 +60,129 @@ ul.wp-block-lsbg-language-switcher li.current-lang a {
     padding: 0.5em;
 }
 
+/* Custom Dropdown with Flags in Editor */
+.lsbg-dropdown-container {
+    position: relative;
+    display: inline-block;
+    min-width: 200px;
+}
+
+.lsbg-dropdown-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 200px;
+    padding: 0.5em 1em;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    text-align: left;
+}
+
+.lsbg-dropdown-button-image {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.5em;
+}
+
+.lsbg-dropdown-button-image img.flag {
+    vertical-align: middle;
+}
+
+.lsbg-dropdown-button-name {
+    flex: 1;
+}
+
+/* Only add margin when there's an image before the name */
+.lsbg-dropdown-button-image + .lsbg-dropdown-button-name {
+    margin-left: 0;
+}
+
+.lsbg-dropdown-arrow {
+    display: inline-block;
+    font-size: 0.75em;
+    margin-left: 0.5em;
+}
+
+/* Legacy selectors for backwards compatibility */
+.lsbg-dropdown-button img.flag {
+    vertical-align: middle;
+    margin-right: 0.5em;
+}
+
+.lsbg-dropdown-current-name {
+    flex: 1;
+    margin-right: 0.5em;
+}
+
+.lsbg-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    padding: 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.lsbg-dropdown-item {
+    margin: 0;
+    padding: 0;
+}
+
+.lsbg-dropdown-item a {
+    display: flex !important;
+    align-items: center;
+    width: 78%;
+    padding: 0.5em;
+    text-decoration: none;
+    color: #333;
+}
+
+.lsbg-dropdown-item.current-lang a {
+    background: #f9f9f9;
+    font-weight: 600;
+}
+
+.lsbg-dropdown-item-image {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.5em;
+}
+
+.lsbg-dropdown-item-image img.flag {
+    vertical-align: middle;
+}
+
+.lsbg-dropdown-item-name {
+    flex: 1;
+}
+
+/* Only add margin when there's an image before the name */
+.lsbg-dropdown-item-image + .lsbg-dropdown-item-name {
+    margin-left: 0;
+}
+
+/* Legacy selectors for backwards compatibility */
+.lsbg-dropdown-item img.flag {
+    vertical-align: middle;
+    margin-right: 0.5em;
+}
+
+.lsbg-dropdown-item span {
+    flex: 1;
+}
+
 /* Flags */
 .wp-block-lsbg-language-switcher img.flag {
     vertical-align: middle;

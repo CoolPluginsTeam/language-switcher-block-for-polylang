@@ -195,6 +195,15 @@ class LSBG_Language_Switcher_Block {
             false
         );
         
+        // Register custom dropdown script
+        wp_register_script(
+            'lsbg-custom-dropdown',
+            LSBG_PLUGIN_URL . 'build/dropdown.js',
+            array(),
+            LSBG_VERSION,
+            true
+        );
+        
         // Register editor style
         wp_register_style(
             'lsbg-language-switcher-block-editor',
@@ -210,6 +219,16 @@ class LSBG_Language_Switcher_Block {
             array(),
             LSBG_VERSION
         );
+        
+        // Enqueue dropdown script for editor
+        add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_dropdown_script' ) );
+    }
+    
+    /**
+     * Enqueue dropdown script in the block editor
+     */
+    public function enqueue_editor_dropdown_script() {
+        wp_enqueue_script( 'lsbg-custom-dropdown' );
     }
     
     /**
@@ -282,19 +301,35 @@ class LSBG_Language_Switcher_Block {
         // Prepare switcher arguments
         $layout = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
         
+        $show_names = ! empty( $attributes['show_names'] );
+        $show_flags = ! empty( $attributes['show_flags'] );
+        $force_home = ! empty( $attributes['force_home'] );
+        $hide_current = ! empty( $attributes['hide_current'] );
+        $hide_if_no_translation = ! empty( $attributes['hide_if_no_translation'] );
+        $is_dropdown = ( $layout === 'dropdown' );
+        
+        if ( ! $show_names && ! $show_flags ) {
+            return '';
+        }
+        
+        // Use custom dropdown for dropdown layout
+        if ( $is_dropdown ) {
+            return $this->render_custom_dropdown( $attributes );
+        }
+        
+        // Use standard Polylang output
         $args = array(
             'echo'                   => 0,
-            'show_names'             => ! empty( $attributes['show_names'] ),
-            'show_flags'             => ! empty( $attributes['show_flags'] ),
-            'force_home'             => ! empty( $attributes['force_home'] ),
-            'hide_current'           => ! empty( $attributes['hide_current'] ),
-            'hide_if_no_translation' => ! empty( $attributes['hide_if_no_translation'] ),
-            'dropdown'               => ( $layout === 'dropdown' ) ? ++$this->dropdown_id : 0,
+            'show_names'             => $show_names,
+            'show_flags'             => $show_flags,
+            'force_home'             => $force_home,
+            'hide_current'           => $hide_current,
+            'hide_if_no_translation' => $hide_if_no_translation,
+            'dropdown'               => $is_dropdown ? ++$this->dropdown_id : 0,
         );
         
         // Get switcher output
         $switcher_output = pll_the_languages( $args );
-
         
         if ( empty( $switcher_output ) ) {
             return '';
@@ -319,6 +354,244 @@ class LSBG_Language_Switcher_Block {
         }
         
         return sprintf( $wrap_tag, $wrapper_attributes, $switcher_output );
+    }
+    
+    /**
+     * Render custom dropdown with flags support
+     *
+     * @param array $attributes Block attributes.
+     * @return string Block HTML.
+     */
+    private function render_custom_dropdown( $attributes ) {
+        if ( ! function_exists( 'pll_the_languages' ) ) {
+            return '';
+        }
+        
+        $show_names = ! empty( $attributes['show_names'] );
+        $show_flags = ! empty( $attributes['show_flags'] );
+        $force_home = ! empty( $attributes['force_home'] );
+        $hide_current = ! empty( $attributes['hide_current'] );
+        $hide_if_no_translation = ! empty( $attributes['hide_if_no_translation'] );
+        
+        // Get languages as array
+        $args = array(
+            'echo'                   => 0,
+            'raw'                    => 1,
+            'show_flags'             => $show_flags,
+            'show_names'             => $show_names,
+            'force_home'             => $force_home,
+            'hide_current'           => $hide_current,
+            'hide_if_no_translation' => $hide_if_no_translation,
+        );
+        
+        $languages = pll_the_languages( $args );
+        
+        if ( empty( $languages ) || ! is_array( $languages ) ) {
+            return '';
+        }
+        
+        // Enqueue custom dropdown script
+        wp_enqueue_script(
+            'lsbg-custom-dropdown',
+            LSBG_PLUGIN_URL . 'build/dropdown.js',
+            array(),
+            LSBG_VERSION,
+            true
+        );
+        
+        // Generate unique ID for this dropdown
+        $dropdown_id = ++$this->dropdown_id;
+        $unique_id = 'lsbg-dropdown-' . $dropdown_id;
+        
+        // Find current language
+        $current_lang = null;
+        foreach ( $languages as $lang ) {
+            if ( ! empty( $lang['current_lang'] ) ) {
+                $current_lang = $lang;
+                break;
+            }
+        }
+        
+        if ( ! $current_lang ) {
+            $current_lang = reset( $languages );
+        }
+        
+        // Build wrapper attributes
+        $layout_class = 'lsbg-layout-dropdown lsbg-custom-dropdown';
+        $custom_class = isset( $attributes['className'] ) ? $attributes['className'] : '';
+        $wrapper_class = trim( $layout_class . ' ' . $custom_class );
+        
+        $wrapper_attributes = get_block_wrapper_attributes( 
+            array( 'class' => $wrapper_class )
+        );
+        
+        $aria_label = __( 'Choose a language', 'language-switcher-block-for-polylang' );
+        
+        // Build dropdown HTML
+        $output = '<div ' . $wrapper_attributes . '>';
+        $output .= '<div class="lsbg-dropdown-container" id="' . esc_attr( $unique_id ) . '">';
+        
+        // Dropdown button (shows current language)
+        $output .= '<button type="button" class="lsbg-dropdown-button" aria-haspopup="listbox" aria-expanded="false" aria-label="' . esc_attr( $aria_label ) . '">';
+        
+        if ( $show_flags && ! empty( $current_lang['flag'] ) ) {
+            $output .= '<div class="lsbg-dropdown-button-image">';
+            $output .= $current_lang['flag'];
+            $output .= '</div>';
+        }
+        
+        if ( $show_names && ! empty( $current_lang['name'] ) ) {
+            $output .= '<div class="lsbg-dropdown-button-name">';
+            $output .= esc_html( $current_lang['name'] );
+            $output .= '</div>';
+        }
+        
+        $output .= '<span class="lsbg-dropdown-arrow" aria-hidden="true">▼</span>';
+        $output .= '</button>';
+        
+        // Dropdown menu
+        $output .= '<ul class="lsbg-dropdown-menu" role="listbox" style="display: none;">';
+        
+        foreach ( $languages as $lang ) {
+            $is_current = ! empty( $lang['current_lang'] );
+            $classes = array( 'lsbg-dropdown-item' );
+            
+            if ( $is_current ) {
+                $classes[] = 'current-lang';
+            }
+            
+            $output .= '<li role="option" class="' . esc_attr( implode( ' ', $classes ) ) . '">';
+            $output .= '<a href="' . esc_url( $lang['url'] ) . '">';
+            
+            if ( $show_flags && ! empty( $lang['flag'] ) ) {
+                $output .= '<div class="lsbg-dropdown-item-image">';
+                $output .= $lang['flag'];
+                $output .= '</div>';
+            }
+            
+            if ( $show_names && ! empty( $lang['name'] ) ) {
+                $output .= '<div class="lsbg-dropdown-item-name">';
+                $output .= esc_html( $lang['name'] );
+                $output .= '</div>';
+            }
+            
+            $output .= '</a>';
+            $output .= '</li>';
+        }
+        
+        $output .= '</ul>';
+        $output .= '</div>';
+        
+        // Add inline initialization script for editor compatibility
+        $output .= '<script>
+        (function() {
+            var container = document.getElementById("' . esc_js( $unique_id ) . '");
+            if (!container || container.hasAttribute("data-lsbg-initialized")) return;
+            
+            var button = container.querySelector(".lsbg-dropdown-button");
+            var menu = container.querySelector(".lsbg-dropdown-menu");
+            
+            if (!button || !menu) return;
+            
+            container.setAttribute("data-lsbg-initialized", "true");
+            
+            // Detect if we are in the editor context
+            function isInEditor() {
+                try {
+                    // Check if in iframe (ServerSideRender)
+                    if (window.self !== window.top) {
+                        return true;
+                    }
+                    // Check for editor-specific classes
+                    if (document.body.classList.contains("block-editor-page") ||
+                        document.body.classList.contains("wp-admin")) {
+                        return true;
+                    }
+                    // Check for editor elements
+                    if (document.querySelector(".block-editor") || 
+                        document.querySelector(".edit-post-visual-editor")) {
+                        return true;
+                    }
+                } catch (e) {
+                    // If we cannot access top window, assume we are in iframe/editor
+                    return true;
+                }
+                return false;
+            }
+            
+            var inEditor = isInEditor();
+            
+            function toggleDropdown() {
+                var isExpanded = button.getAttribute("aria-expanded") === "true";
+                if (isExpanded) {
+                    button.setAttribute("aria-expanded", "false");
+                    menu.style.display = "none";
+                } else {
+                    button.setAttribute("aria-expanded", "true");
+                    menu.style.display = "block";
+                }
+            }
+            
+            function closeDropdown() {
+                button.setAttribute("aria-expanded", "false");
+                menu.style.display = "none";
+            }
+            
+            button.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleDropdown();
+            });
+            
+            button.addEventListener("keydown", function(e) {
+                if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+                    e.preventDefault();
+                    button.setAttribute("aria-expanded", "true");
+                    menu.style.display = "block";
+                    var firstItem = menu.querySelector("a");
+                    if (firstItem) firstItem.focus();
+                } else if (e.key === "Escape") {
+                    closeDropdown();
+                }
+            });
+            
+            menu.addEventListener("keydown", function(e) {
+                if (e.key === "Escape") {
+                    e.preventDefault();
+                    closeDropdown();
+                    button.focus();
+                } else if (e.key === "Tab") {
+                    closeDropdown();
+                }
+            });
+            
+            // Prevent link navigation in editor
+            if (inEditor) {
+                var links = menu.querySelectorAll("a");
+                links.forEach(function(link) {
+                    link.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        closeDropdown();
+                    });
+                });
+            }
+            
+            document.addEventListener("click", function(e) {
+                if (!container.contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+            
+            menu.addEventListener("click", function(e) {
+                e.stopPropagation();
+            });
+        })();
+        </script>';
+        
+        $output .= '</div>';
+        
+        return $output;
     }
 }
 
