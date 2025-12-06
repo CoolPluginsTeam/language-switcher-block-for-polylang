@@ -224,7 +224,16 @@ class LSBG_Language_Switcher_Block {
             'force_home'             => array( 'label' => __( 'Forces link to front page', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
             'hide_current'           => array( 'label' => __( 'Hides the current language', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
             'hide_if_no_translation' => array( 'label' => __( 'Hides languages with no translation', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
-            'dropdown'               => array( 'label' => __( 'Displays as dropdown', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
+            'dropdown'               => array( 
+                'label' => __( 'Layout', 'language-switcher-block-for-polylang' ), 
+                'type' => 'select',
+                'default' => 'vertical',
+                'options' => array(
+                    'dropdown' => __( 'Dropdown', 'language-switcher-block-for-polylang' ),
+                    'vertical' => __( 'Vertical', 'language-switcher-block-for-polylang' ),
+                    'horizontal' => __( 'Horizontal', 'language-switcher-block-for-polylang' ),
+                )
+            ),
         );
     }
     
@@ -243,10 +252,17 @@ class LSBG_Language_Switcher_Block {
         );
         
         foreach ( $switcher_options as $option => $data ) {
-            $attributes[ $option ] = array(
-                'type'    => 'boolean',
-                'default' => (bool) $data['default'],
-            );
+            if ( isset( $data['type'] ) && $data['type'] === 'select' ) {
+                $attributes[ $option ] = array(
+                    'type'    => 'string',
+                    'default' => $data['default'],
+                );
+            } else {
+                $attributes[ $option ] = array(
+                    'type'    => 'boolean',
+                    'default' => (bool) $data['default'],
+                );
+            }
         }
         
         return $attributes;
@@ -264,6 +280,8 @@ class LSBG_Language_Switcher_Block {
         }
         
         // Prepare switcher arguments
+        $layout = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
+        
         $args = array(
             'echo'                   => 0,
             'show_names'             => ! empty( $attributes['show_names'] ),
@@ -271,7 +289,7 @@ class LSBG_Language_Switcher_Block {
             'force_home'             => ! empty( $attributes['force_home'] ),
             'hide_current'           => ! empty( $attributes['hide_current'] ),
             'hide_if_no_translation' => ! empty( $attributes['hide_if_no_translation'] ),
-            'dropdown'               => ! empty( $attributes['dropdown'] ) ? ++$this->dropdown_id : 0,
+            'dropdown'               => ( $layout === 'dropdown' ) ? ++$this->dropdown_id : 0,
         );
         
         // Get switcher output
@@ -282,9 +300,13 @@ class LSBG_Language_Switcher_Block {
             return '';
         }
         
-        // Build wrapper attributes
+        // Build wrapper attributes with layout class
+        $layout_class = 'lsbg-layout-' . esc_attr( $layout );
+        $custom_class = isset( $attributes['className'] ) ? $attributes['className'] : '';
+        $wrapper_class = trim( $layout_class . ' ' . $custom_class );
+        
         $wrapper_attributes = get_block_wrapper_attributes( 
-            array( 'class' => isset( $attributes['className'] ) ? $attributes['className'] : '' )
+            array( 'class' => $wrapper_class )
         );
         
         $aria_label = __( 'Choose a language', 'language-switcher-block-for-polylang' );

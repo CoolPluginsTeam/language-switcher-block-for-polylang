@@ -6,6 +6,7 @@
     var InspectorControls = blockEditor.InspectorControls;
     var PanelBody = components.PanelBody;
     var ToggleControl = components.ToggleControl;
+    var SelectControl = components.SelectControl;
     var ServerSideRender = serverSideRender;
     var __ = i18n.__;
 
@@ -44,8 +45,8 @@
                 default: false
             },
             dropdown: {
-                type: 'boolean',
-                default: false
+                type: 'string',
+                default: 'vertical'
             }
         },
         supports: {
@@ -58,28 +59,56 @@
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
 
-            // Create toggle controls for each option
+            // Create controls for each option
             var controls = [];
             for (var option in settings.options) {
                 if (settings.options.hasOwnProperty(option)) {
-                    // Hide show_flags, show_names, and hide_current options when dropdown is selected
-                    if ((option === 'hide_current' || option === 'show_flags' || option === 'show_names') && attributes.dropdown) {
-                        continue;
-                    }
                     (function (opt) {
-                        controls.push(
-                            el(ToggleControl, {
-                                key: opt,
-                                label: settings.options[opt].label,
-                                checked: attributes[opt],
-                                onChange: function (value) {
-                                    var newAttrs = {};
-                                    newAttrs[opt] = value;
-                                    setAttributes(newAttrs);
-                                },
-                                __nextHasNoMarginBottom: true
-                            })
-                        );
+                        var optionData = settings.options[opt];
+                        
+                        // Check if this is a select control
+                        if (optionData.type === 'select' && optionData.options) {
+                            // Convert options object to array for SelectControl
+                            var selectOptions = [];
+                            for (var key in optionData.options) {
+                                if (optionData.options.hasOwnProperty(key)) {
+                                    selectOptions.push({
+                                        label: optionData.options[key],
+                                        value: key
+                                    });
+                                }
+                            }
+                            
+                            controls.push(
+                                el(SelectControl, {
+                                    key: opt,
+                                    label: optionData.label,
+                                    value: attributes[opt],
+                                    options: selectOptions,
+                                    onChange: function (value) {
+                                        var newAttrs = {};
+                                        newAttrs[opt] = value;
+                                        setAttributes(newAttrs);
+                                    },
+                                    __nextHasNoMarginBottom: true
+                                })
+                            );
+                        } else {
+                            // Default to ToggleControl for boolean options
+                            controls.push(
+                                el(ToggleControl, {
+                                    key: opt,
+                                    label: optionData.label,
+                                    checked: attributes[opt],
+                                    onChange: function (value) {
+                                        var newAttrs = {};
+                                        newAttrs[opt] = value;
+                                        setAttributes(newAttrs);
+                                    },
+                                    __nextHasNoMarginBottom: true
+                                })
+                            );
+                        }
                     })(option);
                 }
             }
