@@ -1,0 +1,81 @@
+/**
+ * Frontend styles for Language Switcher Block
+ */
+
+.wp-block-lsbg-language-switcher {
+    margin: 1em 0;
+}
+
+/* List style switcher */
+.wp-block-lsbg-language-switcher ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+}
+
+.wp-block-lsbg-language-switcher ul li {
+    margin: 0;
+    padding: 0;
+}
+
+.wp-block-lsbg-language-switcher ul li a {
+    display: inline-block;
+    padding: 0.5em 1em;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.wp-block-lsbg-language-switcher ul li a:hover {
+    background-color: #f0f0f0;
+    border-color: #999;
+}
+
+.wp-block-lsbg-language-switcher ul li.current-lang a {
+    background-color: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+    font-weight: bold;
+}
+
+/* Dropdown style */
+.wp-block-lsbg-language-switcher select {
+    min-width: 200px;
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.wp-block-lsbg-language-switcher select:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+/* Flags */
+.wp-block-lsbg-language-switcher img.flag {
+    vertical-align: middle;
+    margin-right: 0.25em;
+    max-height: 1em;
+}
+
+/* Accessibility */
+.wp-block-lsbg-language-switcher .screen-reader-text {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    word-wrap: normal;
+}
+

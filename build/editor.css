@@ -1,0 +1,52 @@
+/**
+ * Editor styles for Language Switcher Block
+ */
+
+.wp-block-lsbg-language-switcher {
+    margin: 1em 0;
+}
+
+.wp-block-lsbg-language-switcher .components-placeholder {
+    min-height: 100px;
+}
+
+/* Language switcher preview in editor */
+.wp-block-lsbg-language-switcher ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+}
+
+.wp-block-lsbg-language-switcher ul li {
+    margin: 0;
+    padding: 0;
+}
+
+.wp-block-lsbg-language-switcher ul li a {
+    display: inline-block;
+    padding: 0.5em 1em;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.wp-block-lsbg-language-switcher ul li.current-lang a {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+/* Dropdown style in editor */
+.wp-block-lsbg-language-switcher select {
+    min-width: 200px;
+    padding: 0.5em;
+}
+
+/* Flags */
+.wp-block-lsbg-language-switcher img.flag {
+    vertical-align: middle;
+    margin-right: 0.25em;
+}
+
