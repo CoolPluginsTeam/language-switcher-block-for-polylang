@@ -207,7 +207,7 @@
                         onChange: function(value) {
                             setAttributes({ flagWidth: value });
                         },
-                        min: 16,
+                        min: 0,
                         max: 100,
                         step: 1
                     }),
@@ -378,4 +378,33 @@
     window.wp.i18n,
     window.wp.serverSideRender
 );
+
+// Prevent link clicks in the editor
+(function() {
+    'use strict';
+    
+    // Use event delegation to handle clicks on links within the language switcher block
+    document.addEventListener('click', function(e) {
+        // Check if we're in the block editor
+        var isEditor = document.body.classList.contains('block-editor-page') || 
+                       document.body.classList.contains('wp-admin');
+        
+        if (!isEditor) {
+            return;
+        }
+        
+        // Check if the clicked element is a link within the language switcher block
+        var target = e.target;
+        var link = target.closest('a');
+        
+        if (link) {
+            var languageSwitcher = link.closest('.wp-block-lsbg-language-switcher');
+            if (languageSwitcher) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }
+    }, true);
+})();
 

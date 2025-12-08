@@ -10,6 +10,13 @@
     min-height: 100px;
 }
 
+/* Disable links in the editor */
+.editor-styles-wrapper .wp-block-lsbg-language-switcher a,
+.block-editor-block-list__block .wp-block-lsbg-language-switcher a {
+    pointer-events: none;
+    cursor: default;
+}
+
 /* Inspector Tabs */
 .lsbg-inspector-tabs .components-tab-panel__tabs {
     border-bottom: 1px solid #ddd;
