@@ -41,6 +41,11 @@ ul.wp-block-lsbg-language-switcher li {
     position: relative;
     display: inline-block;
     min-width: 200px;
+    padding: 0.5em;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: visible;
 }
 
 .lsbg-dropdown-button {
@@ -48,25 +53,17 @@ ul.wp-block-lsbg-language-switcher li {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    min-width: 200px;
-    padding: 0.5em 0.5em !important;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 0 !important;
+    background: transparent;
+    border: none;
     cursor: pointer;
     font-size: 1em;
     text-align: left;
     transition: all 0.2s ease;
 }
 
-.lsbg-dropdown-button:hover {
-    border-color: #999;
-    background: #f9f9f9;
-}
-
 .lsbg-dropdown-button:focus {
-    outline: 2px solid #007cba;
-    outline-offset: 2px;
+    outline: none;
 }
 
 .lsbg-dropdown-button-name {
@@ -93,16 +90,17 @@ ul.wp-block-lsbg-language-switcher li {
     top: 100%;
     left: 0;
     right: 0;
-    margin-top: 4px;
+    margin: 0;
     padding: 0;
     list-style: none;
     background: #fff;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-top: none;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     z-index: 1000;
-    max-height: 300px;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .lsbg-dropdown-item {
@@ -120,16 +118,15 @@ ul.wp-block-lsbg-language-switcher li {
     transition: background-color 0.2s ease;
 }
 
-.lsbg-dropdown-item a:hover,
+/* .lsbg-dropdown-item a:hover,
 .lsbg-dropdown-item a:focus {
     background: #f0f0f0;
     outline: none;
-}
+} */
 
 .lsbg-dropdown-item.current-lang a {
-    background: #f9f9f9;
     font-weight: 600;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
 }
 
 .lsbg-dropdown-item-name {

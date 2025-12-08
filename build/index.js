@@ -11,6 +11,8 @@
     var BoxControl = components.__experimentalBoxControl || components.BoxControl;
     var BorderControl = components.__experimentalBorderControl || components.BorderControl;
     var RangeControl = components.RangeControl;
+    var ColorPalette = components.ColorPalette;
+    var FontSizePicker = components.FontSizePicker;
     var ServerSideRender = serverSideRender;
     var __ = i18n.__;
 
@@ -107,6 +109,22 @@
             flagRadius: {
                 type: 'number',
                 default: 0
+            },
+            fontSize: {
+                type: 'string',
+                default: ''
+            },
+            fontFamily: {
+                type: 'string',
+                default: ''
+            },
+            textColor: {
+                type: 'string',
+                default: ''
+            },
+            backgroundColor: {
+                type: 'string',
+                default: ''
             }
         },
         supports: {
@@ -155,6 +173,106 @@
                 });
             };
 
+            // Helper function to create typography controls
+            var createTypographyControls = function() {
+                var controls = [];
+
+                // Font Size Control
+                controls.push(
+                    el(RangeControl, {
+                        key: 'fontSize',
+                        label: __('Font Size', 'language-switcher-block-for-polylang'),
+                        value: parseInt(attributes.fontSize) || 16,
+                        onChange: function(value) {
+                            setAttributes({ fontSize: value + 'px' });
+                        },
+                        min: 10,
+                        max: 72,
+                        step: 1,
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
+                    })
+                );
+
+                // Font Family Control
+                controls.push(
+                    el(SelectControl, {
+                        key: 'fontFamily',
+                        label: __('Font Family', 'language-switcher-block-for-polylang'),
+                        value: attributes.fontFamily || '',
+                        options: [
+                            { label: __('Default', 'language-switcher-block-for-polylang'), value: '' },
+                            { label: 'Arial', value: 'Arial, sans-serif' },
+                            { label: 'Helvetica', value: 'Helvetica, sans-serif' },
+                            { label: 'Times New Roman', value: '"Times New Roman", serif' },
+                            { label: 'Georgia', value: 'Georgia, serif' },
+                            { label: 'Courier New', value: '"Courier New", monospace' },
+                            { label: 'Verdana', value: 'Verdana, sans-serif' },
+                            { label: 'Trebuchet MS', value: '"Trebuchet MS", sans-serif' },
+                            { label: 'Comic Sans MS', value: '"Comic Sans MS", cursive' },
+                            { label: 'Impact', value: 'Impact, sans-serif' }
+                        ],
+                        onChange: function(value) {
+                            setAttributes({ fontFamily: value });
+                        },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
+                    })
+                );
+
+                // Text Color Control
+                controls.push(
+                    el('div', {
+                        key: 'textColorWrapper',
+                        style: { marginBottom: '16px' }
+                    },
+                        el('label', {
+                            style: {
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontSize: '11px',
+                                fontWeight: '500',
+                                textTransform: 'uppercase'
+                            }
+                        }, __('Text Color', 'language-switcher-block-for-polylang')),
+                        el(ColorPalette, {
+                            value: attributes.textColor,
+                            onChange: function(color) {
+                                setAttributes({ textColor: color });
+                            },
+                            clearable: true
+                        })
+                    )
+                );
+
+                // Background Color Control
+                controls.push(
+                    el('div', {
+                        key: 'backgroundColorWrapper',
+                        style: { marginBottom: '16px' }
+                    },
+                        el('label', {
+                            style: {
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontSize: '11px',
+                                fontWeight: '500',
+                                textTransform: 'uppercase'
+                            }
+                        }, __('Background Color', 'language-switcher-block-for-polylang')),
+                        el(ColorPalette, {
+                            value: attributes.backgroundColor,
+                            onChange: function(color) {
+                                setAttributes({ backgroundColor: color });
+                            },
+                            clearable: true
+                        })
+                    )
+                );
+
+                return controls;
+            };
+
             // Helper function to create border control
             var createBorderControl = function() {
                 if (!BorderControl) {
@@ -198,7 +316,9 @@
                         ],
                         onChange: function(value) {
                             setAttributes({ flagRatio: value });
-                        }
+                        },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
                     }),
                     el(RangeControl, {
                         key: 'flagWidth',
@@ -209,7 +329,9 @@
                         },
                         min: 0,
                         max: 100,
-                        step: 1
+                        step: 1,
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
                     }),
                     el(RangeControl, {
                         key: 'flagRadius',
@@ -220,7 +342,9 @@
                         },
                         min: 0,
                         max: 100,
-                        step: 1
+                        step: 1,
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
                     })
                 ];
             };
@@ -256,6 +380,7 @@
                                         newAttrs[opt] = value;
                                         setAttributes(newAttrs);
                                     },
+                                    __next40pxDefaultSize: true,
                                     __nextHasNoMarginBottom: true
                                 })
                             );
@@ -319,9 +444,18 @@
                                     el(
                                         PanelBody,
                                         {
+                                            key: 'typography',
+                                            title: __('Typography', 'language-switcher-block-for-polylang'),
+                                            initialOpen: true
+                                        },
+                                        createTypographyControls()
+                                    ),
+                                    el(
+                                        PanelBody,
+                                        {
                                             key: 'spacing',
                                             title: __('Spacing', 'language-switcher-block-for-polylang'),
-                                            initialOpen: true
+                                            initialOpen: false
                                         },
                                         createSpacingControl(__('Margin', 'language-switcher-block-for-polylang'), 'margin'),
                                         createSpacingControl(__('Padding', 'language-switcher-block-for-polylang'), 'padding')

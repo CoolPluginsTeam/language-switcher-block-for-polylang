@@ -325,6 +325,22 @@ class LSBG_Language_Switcher_Block {
 				'type'    => 'number',
 				'default' => 0,
 			),
+			'fontSize'      => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'fontFamily'    => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'textColor'     => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'backgroundColor' => array(
+				'type'    => 'string',
+				'default' => '',
+			),
 		);
 
 		foreach ( $switcher_options as $option => $data ) {
@@ -376,7 +392,7 @@ class LSBG_Language_Switcher_Block {
 	}
 
 	/**
-	 * Generate custom spacing, border, and flag CSS
+	 * Generate custom spacing, border, flag, and typography CSS
 	 *
 	 * @param array  $attributes Block attributes.
 	 * @param string $block_class Block class name.
@@ -394,8 +410,15 @@ class LSBG_Language_Switcher_Block {
 		$has_padding = array_sum( $padding ) > 0;
 		$has_border  = ! empty( $border['width'] ) && ! empty( $border['color'] );
 		$show_flags  = ! empty( $attributes['show_flags'] );
+		
+		// Typography attributes
+		$has_font_size = ! empty( $attributes['fontSize'] );
+		$has_font_family = ! empty( $attributes['fontFamily'] );
+		$has_text_color = ! empty( $attributes['textColor'] );
+		$has_background_color = ! empty( $attributes['backgroundColor'] );
+		$has_typography = $has_font_size || $has_font_family || $has_text_color || $has_background_color;
 
-		if ( ! $has_margin && ! $has_padding && ! $has_border && ! $show_flags ) {
+		if ( ! $has_margin && ! $has_padding && ! $has_border && ! $show_flags && ! $has_typography ) {
 			return '';
 		}
 
@@ -417,13 +440,30 @@ class LSBG_Language_Switcher_Block {
 			$css .= 'border: ' . $border['width'] . ' ' . $border['style'] . ' ' . $border['color'] . ';';
 		}
 
+		if ( $has_font_size ) {
+			$css .= 'font-size: ' . esc_attr( $attributes['fontSize'] ) . ';';
+		}
+
+		if ( $has_font_family ) {
+			$css .= 'font-family: ' . esc_attr( $attributes['fontFamily'] ) . ';';
+		}
+
+		if ( $has_text_color ) {
+			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . ';';
+		}
+
+		if ( $has_background_color ) {
+			$css .= 'background-color: ' . esc_attr( $attributes['backgroundColor'] ) . ';';
+		}
+
 		$css .= '}';
 
-		// For dropdown button only
-		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-button.lsep-lang-item {';
+	// For dropdown container - apply margin, padding, border, background
+	if ( $has_margin || $has_padding || $has_border || $has_background_color ) {
+		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-container {';
 
 		if ( $has_margin ) {
-			$css .= 'margin: ' . implode( 'px ', $margin ) . 'px;';
+			$css .= 'margin: ' . implode( 'px ', $margin ) . 'px !important;';
 		}
 
 		if ( $has_padding ) {
@@ -434,7 +474,72 @@ class LSBG_Language_Switcher_Block {
 			$css .= 'border: ' . $border['width'] . ' ' . $border['style'] . ' ' . $border['color'] . ' !important;';
 		}
 
+		if ( $has_background_color ) {
+			$css .= 'background-color: ' . esc_attr( $attributes['backgroundColor'] ) . ' !important;';
+		}
+
 		$css .= '}';
+	}
+
+	// For dropdown button - only typography styles
+	if ( $has_font_size || $has_font_family || $has_text_color ) {
+		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-button {';
+
+		if ( $has_font_size ) {
+			$css .= 'font-size: ' . esc_attr( $attributes['fontSize'] ) . ' !important;';
+		}
+
+		if ( $has_font_family ) {
+			$css .= 'font-family: ' . esc_attr( $attributes['fontFamily'] ) . ' !important;';
+		}
+
+		if ( $has_text_color ) {
+			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . ' !important;';
+		}
+
+		$css .= '}';
+	}
+
+	// For dropdown menu (ul) - background color and padding
+	if ( $has_background_color || $has_padding ) {
+		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-menu {';
+		
+		if ( $has_background_color ) {
+			$css .= 'background-color: ' . esc_attr( $attributes['backgroundColor'] ) . ' !important;';
+		}
+		
+		// if ( $has_padding ) {
+		// 	$css .= 'padding: ' . implode( 'px ', $padding ) . 'px !important;';
+		// }
+		
+		$css .= '}';
+	}
+
+	// For dropdown menu items - padding only
+	if ( $has_padding ) {
+		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-item {';
+		$css .= 'padding: ' . implode( 'px ', $padding ) . 'px !important;';
+		$css .= '}';
+	}
+
+	// For dropdown menu items - typography
+	if ( $has_typography ) {
+		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-item a {';
+
+		if ( $has_font_size ) {
+			$css .= 'font-size: ' . esc_attr( $attributes['fontSize'] ) . ';';
+		}
+
+		if ( $has_font_family ) {
+			$css .= 'font-family: ' . esc_attr( $attributes['fontFamily'] ) . ';';
+		}
+
+		if ( $has_text_color ) {
+			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . ';';
+		}
+
+		$css .= '}';
+	}
 
 		// Flag styles
 		if ( $show_flags ) {
@@ -657,20 +762,22 @@ class LSBG_Language_Switcher_Block {
 			$output .= '</div>';
 		}
 
-		$output .= '<span class="lsbg-dropdown-arrow" aria-hidden="true">▼</span>';
-		$output .= '</button>';
-		$output .= '<ul class="lsbg-dropdown-menu" role="listbox" style="display: none;">';
+	$output .= '<span class="lsbg-dropdown-arrow" aria-hidden="true">▼</span>';
+	$output .= '</button>';
+	$output .= '<ul class="lsbg-dropdown-menu" role="listbox" style="display: none;">';
 
-		foreach ( $languages as $lang ) {
-			$is_current = ! empty( $lang['current_lang'] );
-			$classes    = array( 'lsbg-dropdown-item' );
+	foreach ( $languages as $lang ) {
+		$is_current = ! empty( $lang['current_lang'] );
+		
+		// Skip the current language - don't show it in the dropdown list
+		if ( $is_current ) {
+			continue;
+		}
 
-			if ( $is_current ) {
-				$classes[] = 'current-lang';
-			}
+		$classes = array( 'lsbg-dropdown-item' );
 
-			$output .= '<li role="option" class="' . esc_attr( implode( ' ', $classes ) ) . '">';
-			$output .= '<a href="' . esc_url( $lang['url'] ) . '">';
+		$output .= '<li role="option" class="' . esc_attr( implode( ' ', $classes ) ) . '">';
+		$output .= '<a href="' . esc_url( $lang['url'] ) . '">';
 
 			if ( $show_flags ) {
 				$custom_flag = $this->get_custom_flag( $lang );
