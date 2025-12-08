@@ -113,7 +113,7 @@ ul.wp-block-lsbg-language-switcher li {
 .lsbg-dropdown-item a {
     display: flex !important;
     align-items: center;
-    width: 81%;
+    width: 100%;
     padding: 0.5em 1em;
     text-decoration: none;
     color: #333;
@@ -129,6 +129,7 @@ ul.wp-block-lsbg-language-switcher li {
 .lsbg-dropdown-item.current-lang a {
     background: #f9f9f9;
     font-weight: 600;
+    box-sizing: border-box;
 }
 
 .lsbg-dropdown-item-name {
