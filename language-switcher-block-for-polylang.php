@@ -6,7 +6,7 @@
  * Version: 1.0.0
  * Requires at least: 5.0
  * Requires PHP: 7.2
- * Author: Vishabjeet Singh
+ * Author: Cool Plugins
  * Author URI: 
  * License: GPL2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -240,7 +240,7 @@ class LSBG_Language_Switcher_Block {
         return array(
             'show_names'             => array( 'label' => __( 'Displays language names', 'language-switcher-block-for-polylang' ), 'default' => 1 ),
             'show_flags'             => array( 'label' => __( 'Displays flags', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
-            'force_home'             => array( 'label' => __( 'Forces link to front page', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
+            'show_language_codes'    => array( 'label' => __( 'Show Language Codes', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
             'hide_current'           => array( 'label' => __( 'Hides the current language', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
             'hide_if_no_translation' => array( 'label' => __( 'Hides languages with no translation', 'language-switcher-block-for-polylang' ), 'default' => 0 ),
             'dropdown'               => array( 
@@ -303,7 +303,7 @@ class LSBG_Language_Switcher_Block {
         
         $show_names = ! empty( $attributes['show_names'] );
         $show_flags = ! empty( $attributes['show_flags'] );
-        $force_home = ! empty( $attributes['force_home'] );
+        $show_language_codes = ! empty( $attributes['show_language_codes'] );
         $hide_current = ! empty( $attributes['hide_current'] );
         $hide_if_no_translation = ! empty( $attributes['hide_if_no_translation'] );
         $is_dropdown = ( $layout === 'dropdown' );
@@ -322,7 +322,6 @@ class LSBG_Language_Switcher_Block {
             'echo'                   => 0,
             'show_names'             => $show_names,
             'show_flags'             => $show_flags,
-            'force_home'             => $force_home,
             'hide_current'           => $hide_current,
             'hide_if_no_translation' => $hide_if_no_translation,
             'dropdown'               => $is_dropdown ? ++$this->dropdown_id : 0,
@@ -333,6 +332,27 @@ class LSBG_Language_Switcher_Block {
         
         if ( empty( $switcher_output ) ) {
             return '';
+        }
+        
+        // Add language codes if enabled
+        if ( $show_language_codes && $show_names ) {
+            $raw_args = array(
+                'echo'                   => 0,
+                'raw'                    => 1,
+                'hide_current'           => $hide_current,
+                'hide_if_no_translation' => $hide_if_no_translation,
+            );
+            $languages = pll_the_languages( $raw_args );
+            
+            if ( is_array( $languages ) ) {
+                foreach ( $languages as $lang ) {
+                    if ( ! empty( $lang['name'] ) && ! empty( $lang['slug'] ) ) {
+                        $pattern = '/>(' . preg_quote( $lang['name'], '/' ) . ')<\//';
+                        $replacement = '>' . $lang['name'] . ' <span class="lsbg-language-code">' . esc_html( $lang['slug'] ) . '</span></';
+                        $switcher_output = preg_replace( $pattern, $replacement, $switcher_output );
+                    }
+                }
+            }
         }
         
         // Build wrapper attributes with layout class
@@ -369,7 +389,7 @@ class LSBG_Language_Switcher_Block {
         
         $show_names = ! empty( $attributes['show_names'] );
         $show_flags = ! empty( $attributes['show_flags'] );
-        $force_home = ! empty( $attributes['force_home'] );
+        $show_language_codes = ! empty( $attributes['show_language_codes'] );
         $hide_current = ! empty( $attributes['hide_current'] );
         $hide_if_no_translation = ! empty( $attributes['hide_if_no_translation'] );
         
@@ -379,7 +399,6 @@ class LSBG_Language_Switcher_Block {
             'raw'                    => 1,
             'show_flags'             => $show_flags,
             'show_names'             => $show_names,
-            'force_home'             => $force_home,
             'hide_current'           => $hide_current,
             'hide_if_no_translation' => $hide_if_no_translation,
         );
@@ -443,6 +462,9 @@ class LSBG_Language_Switcher_Block {
         if ( $show_names && ! empty( $current_lang['name'] ) ) {
             $output .= '<div class="lsbg-dropdown-button-name">';
             $output .= esc_html( $current_lang['name'] );
+            if ( $show_language_codes && ! empty( $current_lang['slug'] ) ) {
+                $output .= ' <span class="lsbg-language-code">'  . esc_html( $current_lang['slug'] ) . '</span>';
+            }
             $output .= '</div>';
         }
         
@@ -472,6 +494,9 @@ class LSBG_Language_Switcher_Block {
             if ( $show_names && ! empty( $lang['name'] ) ) {
                 $output .= '<div class="lsbg-dropdown-item-name">';
                 $output .= esc_html( $lang['name'] );
+                if ( $show_language_codes && ! empty( $lang['slug'] ) ) {
+                    $output .= ' <span class="lsbg-language-code">' . esc_html( $lang['slug'] ) . '</span>';
+                }
                 $output .= '</div>';
             }
             

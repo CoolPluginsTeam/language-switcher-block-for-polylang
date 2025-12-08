@@ -32,7 +32,7 @@
                 type: 'boolean',
                 default: false
             },
-            force_home: {
+            show_language_codes: {
                 type: 'boolean',
                 default: false
             },
