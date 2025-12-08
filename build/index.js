@@ -8,6 +8,9 @@
     var ToggleControl = components.ToggleControl;
     var SelectControl = components.SelectControl;
     var TabPanel = components.TabPanel;
+    var BoxControl = components.__experimentalBoxControl || components.BoxControl;
+    var BorderControl = components.__experimentalBorderControl || components.BorderControl;
+    var RangeControl = components.RangeControl;
     var ServerSideRender = serverSideRender;
     var __ = i18n.__;
 
@@ -48,6 +51,62 @@
             dropdown: {
                 type: 'string',
                 default: 'vertical'
+            },
+            marginTop: {
+                type: 'number',
+                default: 0
+            },
+            marginRight: {
+                type: 'number',
+                default: 0
+            },
+            marginBottom: {
+                type: 'number',
+                default: 0
+            },
+            marginLeft: {
+                type: 'number',
+                default: 0
+            },
+            paddingTop: {
+                type: 'number',
+                default: 0
+            },
+            paddingRight: {
+                type: 'number',
+                default: 0
+            },
+            paddingBottom: {
+                type: 'number',
+                default: 0
+            },
+            paddingLeft: {
+                type: 'number',
+                default: 0
+            },
+            borderColor: {
+                type: 'string',
+                default: ''
+            },
+            borderStyle: {
+                type: 'string',
+                default: 'solid'
+            },
+            borderWidth: {
+                type: 'string',
+                default: ''
+            },
+            flagRatio: {
+                type: 'string',
+                default: '1/1'
+            },
+            flagWidth: {
+                type: 'number',
+                default: 24
+            },
+            flagRadius: {
+                type: 'number',
+                default: 0
             }
         },
         supports: {
@@ -59,6 +118,112 @@
         edit: function (props) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
+
+            // Helper function to create spacing control using BoxControl
+            var createSpacingControl = function(label, type) {
+                if (!BoxControl) {
+                    return null;
+                }
+
+                var topAttr = type + 'Top';
+                var rightAttr = type + 'Right';
+                var bottomAttr = type + 'Bottom';
+                var leftAttr = type + 'Left';
+
+                // Create value object from individual attributes
+                var values = {
+                    top: (attributes[topAttr] || 0) + 'px',
+                    right: (attributes[rightAttr] || 0) + 'px',
+                    bottom: (attributes[bottomAttr] || 0) + 'px',
+                    left: (attributes[leftAttr] || 0) + 'px'
+                };
+
+                return el(BoxControl, {
+                    key: type,
+                    label: label,
+                    values: values,
+                    onChange: function(newValues) {
+                        var newAttrs = {};
+                        if (newValues) {
+                            newAttrs[topAttr] = parseInt(newValues.top) || 0;
+                            newAttrs[rightAttr] = parseInt(newValues.right) || 0;
+                            newAttrs[bottomAttr] = parseInt(newValues.bottom) || 0;
+                            newAttrs[leftAttr] = parseInt(newValues.left) || 0;
+                        }
+                        setAttributes(newAttrs);
+                    }
+                });
+            };
+
+            // Helper function to create border control
+            var createBorderControl = function() {
+                if (!BorderControl) {
+                    return null;
+                }
+
+                var borderValue = {};
+                if (attributes.borderColor) {
+                    borderValue.color = attributes.borderColor;
+                }
+                if (attributes.borderStyle) {
+                    borderValue.style = attributes.borderStyle;
+                }
+                if (attributes.borderWidth) {
+                    borderValue.width = attributes.borderWidth;
+                }
+
+                return el(BorderControl, {
+                    label: __('Border', 'language-switcher-block-for-polylang'),
+                    value: borderValue,
+                    onChange: function(newBorder) {
+                        setAttributes({
+                            borderColor: newBorder && newBorder.color ? newBorder.color : '',
+                            borderStyle: newBorder && newBorder.style ? newBorder.style : 'solid',
+                            borderWidth: newBorder && newBorder.width ? newBorder.width : ''
+                        });
+                    }
+                });
+            };
+
+            // Helper function to create flag controls
+            var createFlagControls = function() {
+                return [
+                    el(SelectControl, {
+                        key: 'flagRatio',
+                        label: __('Flag Ratio', 'language-switcher-block-for-polylang'),
+                        value: attributes.flagRatio || '1/1',
+                        options: [
+                            { label: '1:1', value: '1/1' },
+                            { label: '4:3', value: '4/3' }
+                        ],
+                        onChange: function(value) {
+                            setAttributes({ flagRatio: value });
+                        }
+                    }),
+                    el(RangeControl, {
+                        key: 'flagWidth',
+                        label: __('Flag Width', 'language-switcher-block-for-polylang'),
+                        value: attributes.flagWidth || 24,
+                        onChange: function(value) {
+                            setAttributes({ flagWidth: value });
+                        },
+                        min: 16,
+                        max: 100,
+                        step: 1
+                    }),
+                    el(RangeControl, {
+                        key: 'flagRadius',
+                        label: __('Flag Radius', 'language-switcher-block-for-polylang'),
+                        value: attributes.flagRadius || 0,
+                        onChange: function(value) {
+                            setAttributes({ flagRadius: value });
+                        },
+                        min: 0,
+                        max: 100,
+                        step: 1
+                    })
+                ];
+            };
 
             // Create controls for each option
             var controls = [];
@@ -150,13 +315,44 @@
                                 );
                             }
                             if (tab.name === 'styles') {
-                                return el(
-                                    PanelBody,
-                                    {
-                                        title: __('Styles', 'language-switcher-block-for-polylang'),
-                                        initialOpen: true
-                                    }
-                                );
+                                var stylePanels = [
+                                    el(
+                                        PanelBody,
+                                        {
+                                            key: 'spacing',
+                                            title: __('Spacing', 'language-switcher-block-for-polylang'),
+                                            initialOpen: true
+                                        },
+                                        createSpacingControl(__('Margin', 'language-switcher-block-for-polylang'), 'margin'),
+                                        createSpacingControl(__('Padding', 'language-switcher-block-for-polylang'), 'padding')
+                                    ),
+                                    el(
+                                        PanelBody,
+                                        {
+                                            key: 'border',
+                                            title: __('Border', 'language-switcher-block-for-polylang'),
+                                            initialOpen: false
+                                        },
+                                        createBorderControl()
+                                    )
+                                ];
+
+                                // Add Flag panel only if show_flags is enabled
+                                if (attributes.show_flags) {
+                                    stylePanels.push(
+                                        el(
+                                            PanelBody,
+                                            {
+                                                key: 'flag',
+                                                title: __('Flag', 'language-switcher-block-for-polylang'),
+                                                initialOpen: false
+                                            },
+                                            createFlagControls()
+                                        )
+                                    );
+                                }
+
+                                return stylePanels;
                             }
                         }
                     )

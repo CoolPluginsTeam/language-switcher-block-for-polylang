@@ -35,7 +35,7 @@
      * @param {HTMLElement} container - Dropdown container element
      */
     function initDropdown(container) {
-        var button = container.querySelector('.lsbg-dropdown-button');
+        var button = container.querySelector('.lsep-lang-item');
         var menu = container.querySelector('.lsbg-dropdown-menu');
         
         if (!button || !menu) {

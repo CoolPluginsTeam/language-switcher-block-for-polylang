@@ -69,14 +69,12 @@ ul.wp-block-lsbg-language-switcher li {
     outline-offset: 2px;
 }
 
-.lsbg-dropdown-button-image {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 0.5em;
-}
-
 .lsbg-dropdown-button-name {
     flex: 1;
+}
+
+.lsbg-dropdown-button .lsep-lang-image {
+    margin-right: 0.5em;
 }
 
 .lsbg-dropdown-arrow {
@@ -133,14 +131,12 @@ ul.wp-block-lsbg-language-switcher li {
     font-weight: 600;
 }
 
-.lsbg-dropdown-item-image {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 0.5em;
-}
-
 .lsbg-dropdown-item-name {
     flex: 1;
+}
+
+.lsbg-dropdown-item .lsep-lang-image {
+    margin-right: 0.5em;
 }
 
 /* Language Codes */
@@ -197,8 +193,7 @@ ul.wp-block-lsbg-language-switcher li {
 
 /* Flag Images */
 .wp-block-lsbg-language-switcher img.flag,
-.lsbg-dropdown-button-image img.flag,
-.lsbg-dropdown-item-image img.flag {
+.lsep-lang-image img.flag {
     vertical-align: middle;
 }
 

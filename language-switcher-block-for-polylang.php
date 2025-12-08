@@ -43,6 +43,20 @@ class LSBG_Language_Switcher_Block {
 	private $dropdown_id = 0;
 
 	/**
+	 * Block ID counter for unique block IDs
+	 *
+	 * @var int
+	 */
+	private $block_id = 0;
+
+	/**
+	 * Array to store unique block identifiers
+	 *
+	 * @var array
+	 */
+	private $block_instances = array();
+
+	/**
 	 * Private constructor to prevent direct instantiation
 	 */
 	private function __construct() {
@@ -271,6 +285,62 @@ class LSBG_Language_Switcher_Block {
 				'type'    => 'string',
 				'default' => '',
 			),
+			'marginTop' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'marginRight' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'marginBottom' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'marginLeft' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'paddingTop' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'paddingRight' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'paddingBottom' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'paddingLeft' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'borderColor' => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'borderStyle' => array(
+				'type'    => 'string',
+				'default' => 'solid',
+			),
+			'borderWidth' => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'flagRatio' => array(
+				'type'    => 'string',
+				'default' => '1/1',
+			),
+			'flagWidth' => array(
+				'type'    => 'number',
+				'default' => 24,
+			),
+			'flagRadius' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
 		);
 
 		foreach ( $switcher_options as $option => $data ) {
@@ -290,6 +360,150 @@ class LSBG_Language_Switcher_Block {
 		return $attributes;
 	}
     
+	/**
+	 * Generate a unique block identifier
+	 *
+	 * @param array $attributes Block attributes.
+	 * @return string Unique block identifier.
+	 */
+	private function get_unique_block_id( $attributes ) {
+		// Increment the block counter
+		++$this->block_id;
+		
+		// Create a hash based on the current block count and microtime for true uniqueness
+		$unique_hash = substr( md5( $this->block_id . microtime() . serialize( $attributes ) ), 0, 8 );
+		
+		// Create the unique ID
+		$unique_id = 'lsbg-block-' . $this->block_id . '-' . $unique_hash;
+		
+		// Store this instance
+		$this->block_instances[] = $unique_id;
+		
+		return $unique_id;
+	}
+
+	/**
+	 * Get custom flag URL for a language
+	 *
+	 * @param array $lang Language data from Polylang.
+	 * @return string Flag HTML or empty string.
+	 */
+	private function get_custom_flag( $lang ) {
+		$flag_url = $lang['flag'];
+        $country_code = self::lsbg_get_flag_code( $flag_url );
+        $flag         = array();
+
+        $flag['path'] = LSBG_PLUGIN_DIR . 'assets/flags/' . esc_html( $country_code ) . '.svg';
+        $flag['url']  = esc_url( LSBG_PLUGIN_URL . 'assets/flags/' . esc_html( $country_code ) . '.svg' );
+        $flag['src'] = $flag['url'];
+        $flag_html = \PLL_Language::get_flag_html( $flag, '', $lang['name'] );
+        return $flag_html;
+
+	}
+
+    private function lsbg_get_flag_code( $flag_url ) {
+        $flag_code = preg_match( '/polylang\/flags\/([a-z]+)\.(png|svg|jpg|jpeg)$/i', $flag_url, $matches ) ? $matches[1] : false;
+		return $flag_code;
+    }
+
+	/**
+	 * Generate custom spacing, border, and flag CSS
+	 *
+	 * @param array $attributes Block attributes.
+	 * @param string $block_class Block class name.
+	 * @return string Custom CSS.
+	 */
+	private function generate_spacing_css( $attributes, $block_class ) {
+		$css = '';
+		
+		$margin_top    = isset( $attributes['marginTop'] ) ? intval( $attributes['marginTop'] ) : 0;
+		$margin_right  = isset( $attributes['marginRight'] ) ? intval( $attributes['marginRight'] ) : 0;
+		$margin_bottom = isset( $attributes['marginBottom'] ) ? intval( $attributes['marginBottom'] ) : 0;
+		$margin_left   = isset( $attributes['marginLeft'] ) ? intval( $attributes['marginLeft'] ) : 0;
+		
+		$padding_top    = isset( $attributes['paddingTop'] ) ? intval( $attributes['paddingTop'] ) : 0;
+		$padding_right  = isset( $attributes['paddingRight'] ) ? intval( $attributes['paddingRight'] ) : 0;
+		$padding_bottom = isset( $attributes['paddingBottom'] ) ? intval( $attributes['paddingBottom'] ) : 0;
+		$padding_left   = isset( $attributes['paddingLeft'] ) ? intval( $attributes['paddingLeft'] ) : 0;
+		
+		$border_color  = isset( $attributes['borderColor'] ) ? sanitize_text_field( $attributes['borderColor'] ) : '';
+		$border_style  = isset( $attributes['borderStyle'] ) ? sanitize_text_field( $attributes['borderStyle'] ) : 'solid';
+		$border_width  = isset( $attributes['borderWidth'] ) ? sanitize_text_field( $attributes['borderWidth'] ) : '';
+		
+		$flag_ratio  = isset( $attributes['flagRatio'] ) ? sanitize_text_field( $attributes['flagRatio'] ) : '1/1';
+		$flag_width  = isset( $attributes['flagWidth'] ) ? intval( $attributes['flagWidth'] ) : 24;
+		$flag_radius = isset( $attributes['flagRadius'] ) ? intval( $attributes['flagRadius'] ) : 0;
+		
+		$has_margin  = $margin_top || $margin_right || $margin_bottom || $margin_left;
+		$has_padding = $padding_top || $padding_right || $padding_bottom || $padding_left;
+		$has_border  = $border_width && $border_color;
+		$show_flags  = ! empty( $attributes['show_flags'] );
+		
+		if ( $has_margin || $has_padding || $has_border || $show_flags ) {
+			$css .= '<style>';
+			
+			// For horizontal/vertical layouts - list items
+			$css .= '.' . $block_class . '.lsbg-layout-horizontal .lsep-lang-item,';
+			$css .= '.' . $block_class . '.lsbg-layout-vertical .lsep-lang-item {';
+			
+			if ( $has_margin ) {
+				$css .= 'margin: ' . $margin_top . 'px ' . $margin_right . 'px ' . $margin_bottom . 'px ' . $margin_left . 'px;';
+			}
+			
+			if ( $has_padding ) {
+				$css .= 'padding: ' . $padding_top . 'px ' . $padding_right . 'px ' . $padding_bottom . 'px ' . $padding_left . 'px;';
+			}
+			
+			if ( $has_border ) {
+				$css .= 'border: ' . $border_width . ' ' . $border_style . ' ' . $border_color . ';';
+			}
+			
+			$css .= '}';
+			
+			// For dropdown button only (not menu items)
+			$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-button.lsep-lang-item {';
+			
+			if ( $has_margin ) {
+				$css .= 'margin: ' . $margin_top . 'px ' . $margin_right . 'px ' . $margin_bottom . 'px ' . $margin_left . 'px;';
+			}
+			
+			if ( $has_padding ) {
+				$css .= 'padding: ' . $padding_top . 'px ' . $padding_right . 'px ' . $padding_bottom . 'px ' . $padding_left . 'px !important;';
+			}
+			
+			if ( $has_border ) {
+				$css .= 'border: ' . $border_width . ' ' . $border_style . ' ' . $border_color . ' !important;';
+			}
+			
+			$css .= '}';
+			
+			// Flag styles
+			if ( $show_flags ) {
+				// Calculate height based on ratio
+				$flag_height = $flag_ratio === '4/3' ? round( $flag_width * 0.75 ) : $flag_width;
+				
+				$css .= '.' . $block_class . ' .lsep-lang-image {';
+				$css .= 'width: ' . $flag_width . 'px;';
+				$css .= 'height: ' . $flag_height . 'px;';
+				$css .= 'overflow: hidden;';
+				$css .= '}';
+				
+				$css .= '.' . $block_class . ' .lsep-lang-image img {';
+				$css .= 'width: 100%;';
+				$css .= 'height: 100%;';
+				$css .= 'object-fit: cover;';
+				if ( $flag_radius ) {
+					$css .= 'border-radius: ' . $flag_radius . 'px;';
+				}
+				$css .= '}';
+			}
+			
+			$css .= '</style>';
+		}
+		
+		return $css;
+	}
+
 	/**
 	 * Render language switcher block
 	 *
@@ -337,7 +551,7 @@ class LSBG_Language_Switcher_Block {
 		$args = array(
 			'echo'                   => 0,
 			'raw'                    => 1,
-			'show_flags'             => $show_flags,
+			'show_flags'             => 0, // We use custom flags, not Polylang's
 			'show_names'             => $show_names,
 			'hide_current'           => $hide_current,
 			'hide_if_no_translation' => $hide_if_no_translation,
@@ -349,11 +563,13 @@ class LSBG_Language_Switcher_Block {
 			return '';
 		}
 
+		$unique_class       = $this->get_unique_block_id( $attributes );
 		$layout_class       = 'lsbg-layout-' . esc_attr( $layout );
 		$custom_class       = isset( $attributes['className'] ) ? $attributes['className'] : '';
-		$wrapper_class      = trim( $layout_class . ' ' . $custom_class );
+		$wrapper_class      = trim( $unique_class . ' ' . $layout_class . ' ' . $custom_class );
 		$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => $wrapper_class ) );
 		$aria_label         = __( 'Choose a language', 'language-switcher-block-for-polylang' );
+		$spacing_css        = $this->generate_spacing_css( $attributes, $unique_class );
 		$switcher_output    = '';
 
 		foreach ( $languages as $lang ) {
@@ -380,8 +596,11 @@ class LSBG_Language_Switcher_Block {
 			}
 			$switcher_output .= '>';
 
-			if ( $show_flags && ! empty( $lang['flag'] ) ) {
-				$switcher_output .= '<div class="lsep-lang-image">' . $lang['flag'] . '</div>';
+			if ( $show_flags ) {
+				$custom_flag = $this->get_custom_flag( $lang );
+				if ( $custom_flag ) {
+					$switcher_output .= '<div class="lsep-lang-image">' . $custom_flag . '</div>';
+				}
 			}
 
 			if ( $show_names && ! empty( $lang['name'] ) ) {
@@ -396,7 +615,8 @@ class LSBG_Language_Switcher_Block {
 		}
 
 		return sprintf(
-			'<nav role="navigation" aria-label="%s"><ul %s>%s</ul></nav>',
+			'%s<nav role="navigation" aria-label="%s"><ul %s>%s</ul></nav>',
+			$spacing_css,
 			esc_attr( $aria_label ),
 			$wrapper_attributes,
 			$switcher_output
@@ -423,7 +643,7 @@ class LSBG_Language_Switcher_Block {
 		$args = array(
 			'echo'                   => 0,
 			'raw'                    => 1,
-			'show_flags'             => $show_flags,
+			'show_flags'             => 0, // We use custom flags, not Polylang's
 			'show_names'             => $show_names,
 			'hide_current'           => $hide_current,
 			'hide_if_no_translation' => $hide_if_no_translation,
@@ -437,8 +657,9 @@ class LSBG_Language_Switcher_Block {
 
 		wp_enqueue_script( 'lsbg-custom-dropdown' );
 
-		$dropdown_id = ++$this->dropdown_id;
-		$unique_id   = 'lsbg-dropdown-' . $dropdown_id;
+		$unique_class = $this->get_unique_block_id( $attributes );
+		$dropdown_id  = ++$this->dropdown_id;
+		$unique_id    = 'lsbg-dropdown-' . $dropdown_id . '-' . substr( $unique_class, -8 );
 
 		$current_lang = null;
 		foreach ( $languages as $lang ) {
@@ -454,16 +675,21 @@ class LSBG_Language_Switcher_Block {
 
 		$layout_class       = 'lsbg-layout-dropdown lsbg-custom-dropdown';
 		$custom_class       = isset( $attributes['className'] ) ? $attributes['className'] : '';
-		$wrapper_class      = trim( $layout_class . ' ' . $custom_class );
+		$wrapper_class      = trim( $unique_class . ' ' . $layout_class . ' ' . $custom_class );
 		$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => $wrapper_class ) );
 		$aria_label         = __( 'Choose a language', 'language-switcher-block-for-polylang' );
+		$spacing_css        = $this->generate_spacing_css( $attributes, $unique_class );
 
-		$output  = '<div ' . $wrapper_attributes . '>';
+		$output  = $spacing_css;
+		$output .= '<div ' . $wrapper_attributes . '>';
 		$output .= '<div class="lsbg-dropdown-container" id="' . esc_attr( $unique_id ) . '">';
-		$output .= '<button type="button" class="lsbg-dropdown-button" aria-haspopup="listbox" aria-expanded="false" aria-label="' . esc_attr( $aria_label ) . '">';
+		$output .= '<button type="button" class="lsbg-dropdown-button lsep-lang-item" aria-haspopup="listbox" aria-expanded="false" aria-label="' . esc_attr( $aria_label ) . '">';
 
-		if ( $show_flags && ! empty( $current_lang['flag'] ) ) {
-			$output .= '<div class="lsbg-dropdown-button-image">' . $current_lang['flag'] . '</div>';
+		if ( $show_flags ) {
+			$custom_flag = $this->get_custom_flag( $current_lang );
+			if ( $custom_flag ) {
+				$output .= '<div class="lsep-lang-image">' . $custom_flag . '</div>';
+			}
 		}
 
 		if ( $show_names && ! empty( $current_lang['name'] ) ) {
@@ -489,8 +715,11 @@ class LSBG_Language_Switcher_Block {
 			$output .= '<li role="option" class="' . esc_attr( implode( ' ', $classes ) ) . '">';
 			$output .= '<a href="' . esc_url( $lang['url'] ) . '">';
 
-			if ( $show_flags && ! empty( $lang['flag'] ) ) {
-				$output .= '<div class="lsbg-dropdown-item-image">' . $lang['flag'] . '</div>';
+			if ( $show_flags ) {
+				$custom_flag = $this->get_custom_flag( $lang );
+				if ( $custom_flag ) {
+					$output .= '<div class="lsep-lang-image">' . $custom_flag . '</div>';
+				}
 			}
 
 			if ( $show_names && ! empty( $lang['name'] ) ) {
