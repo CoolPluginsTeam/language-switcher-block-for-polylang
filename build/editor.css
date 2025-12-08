@@ -9,3 +9,16 @@
 .wp-block-lsbg-language-switcher .components-placeholder {
     min-height: 100px;
 }
+
+/* Inspector Tabs */
+.lsbg-inspector-tabs .components-tab-panel__tabs {
+    border-bottom: 1px solid #ddd;
+}
+
+.lsbg-inspector-tabs .components-tab-panel__tabs-item {
+    padding: 12px 16px;
+}
+
+.lsbg-inspector-tabs .components-tab-panel__tabs-item.active-tab {
+    border-bottom: 2px solid #1e1e1e;
+}

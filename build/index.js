@@ -7,6 +7,7 @@
     var PanelBody = components.PanelBody;
     var ToggleControl = components.ToggleControl;
     var SelectControl = components.SelectControl;
+    var TabPanel = components.TabPanel;
     var ServerSideRender = serverSideRender;
     var __ = i18n.__;
 
@@ -120,12 +121,44 @@
                     InspectorControls,
                     {},
                     el(
-                        PanelBody,
+                        TabPanel,
                         {
-                            title: __('Language Switcher Settings', 'language-switcher-block-for-polylang'),
-                            initialOpen: true
+                            className: 'lsbg-inspector-tabs',
+                            activeClass: 'active-tab',
+                            tabs: [
+                                {
+                                    name: 'settings',
+                                    title: __('Settings', 'language-switcher-block-for-polylang'),
+                                    className: 'lsbg-settings-tab'
+                                },
+                                {
+                                    name: 'styles',
+                                    title: __('Styles', 'language-switcher-block-for-polylang'),
+                                    className: 'lsbg-styles-tab'
+                                }
+                            ]
                         },
-                        controls
+                        function (tab) {
+                            if (tab.name === 'settings') {
+                                return el(
+                                    PanelBody,
+                                    {
+                                        title: __('Language Switcher Settings', 'language-switcher-block-for-polylang'),
+                                        initialOpen: true
+                                    },
+                                    controls
+                                );
+                            }
+                            if (tab.name === 'styles') {
+                                return el(
+                                    PanelBody,
+                                    {
+                                        title: __('Styles', 'language-switcher-block-for-polylang'),
+                                        initialOpen: true
+                                    }
+                                );
+                            }
+                        }
                     )
                 ),
                 el(ServerSideRender, {
