@@ -19,7 +19,7 @@ if( ! defined( 'ABSPATH' ) ) {
 }
 
 define('LSBG_VERSION', '1.0.0');
-define('LSBG_PLUGIN_NAME', 'Language Switcher Block for');
+define('LSBG_PLUGIN_NAME', 'Language Switcher Block for Polylang');
 define('LSBG_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('LSBG_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -317,42 +317,42 @@ class LSBG_Language_Switcher_Block {
             return $this->render_custom_dropdown( $attributes );
         }
         
-        // Use standard Polylang output
-        $args = array(
-            'echo'                   => 0,
-            'show_names'             => $show_names,
-            'show_flags'             => $show_flags,
-            'hide_current'           => $hide_current,
-            'hide_if_no_translation' => $hide_if_no_translation,
-            'dropdown'               => $is_dropdown ? ++$this->dropdown_id : 0,
-        );
-        
-        // Get switcher output
-        $switcher_output = pll_the_languages( $args );
-        
-        if ( empty( $switcher_output ) ) {
+        // For horizontal and vertical layouts, use custom HTML structure
+        return $this->render_horizontal_vertical_layout( $attributes );
+    }
+    
+    /**
+     * Render horizontal and vertical layouts with custom HTML structure
+     *
+     * @param array $attributes Block attributes.
+     * @return string Block HTML.
+     */
+    private function render_horizontal_vertical_layout( $attributes ) {
+        if ( ! function_exists( 'pll_the_languages' ) ) {
             return '';
         }
         
-        // Add language codes if enabled
-        if ( $show_language_codes && $show_names ) {
-            $raw_args = array(
-                'echo'                   => 0,
-                'raw'                    => 1,
-                'hide_current'           => $hide_current,
-                'hide_if_no_translation' => $hide_if_no_translation,
-            );
-            $languages = pll_the_languages( $raw_args );
-            
-            if ( is_array( $languages ) ) {
-                foreach ( $languages as $lang ) {
-                    if ( ! empty( $lang['name'] ) && ! empty( $lang['slug'] ) ) {
-                        $pattern = '/>(' . preg_quote( $lang['name'], '/' ) . ')<\//';
-                        $replacement = '>' . $lang['name'] . ' <span class="lsbg-language-code">' . esc_html( $lang['slug'] ) . '</span></';
-                        $switcher_output = preg_replace( $pattern, $replacement, $switcher_output );
-                    }
-                }
-            }
+        $layout = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
+        $show_names = ! empty( $attributes['show_names'] );
+        $show_flags = ! empty( $attributes['show_flags'] );
+        $show_language_codes = ! empty( $attributes['show_language_codes'] );
+        $hide_current = ! empty( $attributes['hide_current'] );
+        $hide_if_no_translation = ! empty( $attributes['hide_if_no_translation'] );
+        
+        // Get languages as raw array
+        $args = array(
+            'echo'                   => 0,
+            'raw'                    => 1,
+            'show_flags'             => $show_flags,
+            'show_names'             => $show_names,
+            'hide_current'           => $hide_current,
+            'hide_if_no_translation' => $hide_if_no_translation,
+        );
+        
+        $languages = pll_the_languages( $args );
+        
+        if ( empty( $languages ) || ! is_array( $languages ) ) {
+            return '';
         }
         
         // Build wrapper attributes with layout class
@@ -366,14 +366,66 @@ class LSBG_Language_Switcher_Block {
         
         $aria_label = __( 'Choose a language', 'language-switcher-block-for-polylang' );
         
-        if ( $args['dropdown'] ) {
-            $switcher_output = '<label class="screen-reader-text" for="' . esc_attr( 'lang_choice_' . $args['dropdown'] ) . '">' . esc_html( $aria_label ) . '</label>' . $switcher_output;
-            $wrap_tag = '<div %1$s>%2$s</div>';
-        } else {
-            $wrap_tag = '<nav role="navigation" aria-label="' . esc_attr( $aria_label ) . '"><ul %1$s>%2$s</ul></nav>';
+        // Build list items with new structure
+        $switcher_output = '';
+        
+        foreach ( $languages as $lang ) {
+            $is_current = ! empty( $lang['current_lang'] );
+            
+            $switcher_output .= '<li class="lsep-lang-item' . ( $is_current ? ' current-lang' : '' ) . '">';
+            
+            // Build link with attributes
+            $link_attrs = array(
+                'href' => esc_url( $lang['url'] ),
+            );
+            
+            if ( $is_current ) {
+                $link_attrs['aria-current'] = 'true';
+            }
+            
+            if ( ! empty( $lang['locale'] ) ) {
+                $link_attrs['lang'] = esc_attr( $lang['locale'] );
+                $link_attrs['hreflang'] = esc_attr( $lang['locale'] );
+            }
+            
+            $switcher_output .= '<a';
+            foreach ( $link_attrs as $attr => $value ) {
+                $switcher_output .= ' ' . $attr . '="' . $value . '"';
+            }
+            $switcher_output .= '>';
+            
+            // Flag image wrapped in div
+            if ( $show_flags && ! empty( $lang['flag'] ) ) {
+                $switcher_output .= '<div class="lsep-lang-image">';
+                $switcher_output .= $lang['flag'];
+                $switcher_output .= '</div>';
+            }
+            
+            // Language name wrapped in div
+            if ( $show_names && ! empty( $lang['name'] ) ) {
+                $switcher_output .= '<div class="lsep-lang-name">';
+                $switcher_output .= esc_html( $lang['name'] );
+                $switcher_output .= '</div>';
+            }
+            
+            // Language code wrapped in div (only if enabled)
+            if ( $show_language_codes && ! empty( $lang['slug'] ) ) {
+                $switcher_output .= '<div class="lsep-lang-code">';
+                $switcher_output .= esc_html( $lang['slug'] );
+                $switcher_output .= '</div>';
+            }
+            
+            $switcher_output .= '</a>';
+            $switcher_output .= '</li>';
         }
         
-        return sprintf( $wrap_tag, $wrapper_attributes, $switcher_output );
+        // Wrap in nav and ul
+        return sprintf( 
+            '<nav role="navigation" aria-label="%s"><ul %s>%s</ul></nav>',
+            esc_attr( $aria_label ),
+            $wrapper_attributes,
+            $switcher_output
+        );
     }
     
     /**
