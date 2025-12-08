@@ -7,25 +7,23 @@
     
     /**
      * Detect if we are in the editor context
+     *
+     * @return {boolean} True if in editor context
      */
     function isInEditor() {
         try {
-            // Check if in iframe (ServerSideRender)
             if (window.self !== window.top) {
                 return true;
             }
-            // Check for editor-specific classes
             if (document.body.classList.contains('block-editor-page') ||
                 document.body.classList.contains('wp-admin')) {
                 return true;
             }
-            // Check for editor elements
             if (document.querySelector('.block-editor') || 
                 document.querySelector('.edit-post-visual-editor')) {
                 return true;
             }
         } catch (e) {
-            // If we cannot access top window, assume we are in iframe/editor
             return true;
         }
         return false;
@@ -33,6 +31,8 @@
     
     /**
      * Initialize dropdown functionality
+     *
+     * @param {HTMLElement} container - Dropdown container element
      */
     function initDropdown(container) {
         var button = container.querySelector('.lsbg-dropdown-button');
@@ -44,39 +44,19 @@
         
         var inEditor = isInEditor();
         
-        /**
-         * Toggle dropdown menu
-         */
-        function toggleDropdown() {
-            var isExpanded = button.getAttribute('aria-expanded') === 'true';
-            
-            if (isExpanded) {
-                closeDropdown();
-            } else {
-                openDropdown();
-            }
-        }
-        
-        /**
-         * Open dropdown menu
-         */
-        function openDropdown() {
-            button.setAttribute('aria-expanded', 'true');
-            menu.style.display = 'block';
-            
-            // Focus first item
-            var firstItem = menu.querySelector('a');
-            if (firstItem) {
-                firstItem.focus();
-            }
-        }
-        
-        /**
-         * Close dropdown menu
-         */
         function closeDropdown() {
             button.setAttribute('aria-expanded', 'false');
             menu.style.display = 'none';
+        }
+        
+        function openDropdown() {
+            button.setAttribute('aria-expanded', 'true');
+            menu.style.display = 'block';
+        }
+        
+        function toggleDropdown() {
+            var isExpanded = button.getAttribute('aria-expanded') === 'true';
+            isExpanded ? closeDropdown() : openDropdown();
         }
         
         // Button click handler
@@ -109,8 +89,7 @@
         
         // Prevent link navigation in editor
         if (inEditor) {
-            var links = menu.querySelectorAll('a');
-            links.forEach(function(link) {
+            menu.querySelectorAll('a').forEach(function(link) {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -136,76 +115,38 @@
      * Initialize all dropdowns on the page
      */
     function initAllDropdowns() {
-        var dropdowns = document.querySelectorAll('.lsbg-dropdown-container');
-        dropdowns.forEach(function(dropdown) {
-            // Check if already initialized
-            if (dropdown.hasAttribute('data-lsbg-initialized')) {
-                return;
-            }
-            dropdown.setAttribute('data-lsbg-initialized', 'true');
-            initDropdown(dropdown);
-        });
-    }
-    
-    /**
-     * Initialize dropdowns in all contexts (main window and iframes)
-     */
-    function initAllContexts() {
-        // Initialize in main window
-        initAllDropdowns();
-        
-        // Initialize in iframes (for Gutenberg editor ServerSideRender)
-        var iframes = document.querySelectorAll('iframe');
-        iframes.forEach(function(iframe) {
-            try {
-                var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                if (iframeDoc) {
-                    var iframeDropdowns = iframeDoc.querySelectorAll('.lsbg-dropdown-container');
-                    iframeDropdowns.forEach(function(dropdown) {
-                        // Check if already initialized
-                        if (dropdown.hasAttribute('data-lsbg-initialized')) {
-                            return;
-                        }
-                        dropdown.setAttribute('data-lsbg-initialized', 'true');
-                        initDropdown(dropdown);
-                    });
-                }
-            } catch (e) {
-                // Cross-origin iframe, skip
+        document.querySelectorAll('.lsbg-dropdown-container').forEach(function(dropdown) {
+            if (!dropdown.hasAttribute('data-lsbg-initialized')) {
+                dropdown.setAttribute('data-lsbg-initialized', 'true');
+                initDropdown(dropdown);
             }
         });
     }
     
     // Initialize on DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAllContexts);
+        document.addEventListener('DOMContentLoaded', initAllDropdowns);
     } else {
-        initAllContexts();
+        initAllDropdowns();
     }
     
-    // Re-initialize periodically for editor (ServerSideRender updates)
-    var isEditor = document.body.classList.contains('block-editor-page') || 
-                   document.body.classList.contains('wp-admin');
-    
-    if (isEditor) {
-        // Use MutationObserver to detect when new dropdowns are added
+    // Re-initialize for editor (ServerSideRender updates)
+    if (document.body.classList.contains('block-editor-page') || 
+        document.body.classList.contains('wp-admin')) {
+        
         var observer = new MutationObserver(function(mutations) {
             var shouldInit = false;
             mutations.forEach(function(mutation) {
-                if (mutation.addedNodes.length > 0) {
-                    mutation.addedNodes.forEach(function(node) {
-                        if (node.nodeType === 1) { // Element node
-                            if (node.classList && node.classList.contains('lsbg-dropdown-container')) {
-                                shouldInit = true;
-                            } else if (node.querySelector && node.querySelector('.lsbg-dropdown-container')) {
-                                shouldInit = true;
-                            }
-                        }
-                    });
-                }
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1 && 
+                        (node.classList.contains('lsbg-dropdown-container') || 
+                         node.querySelector('.lsbg-dropdown-container'))) {
+                        shouldInit = true;
+                    }
+                });
             });
             if (shouldInit) {
-                setTimeout(initAllContexts, 100);
+                setTimeout(initAllDropdowns, 100);
             }
         });
         
@@ -213,16 +154,6 @@
             childList: true,
             subtree: true
         });
-    }
-    
-    // Also check periodically in editor
-    if (isEditor) {
-        setInterval(initAllContexts, 1000);
-    }
-    
-    // Re-initialize on dynamic content changes
-    if (typeof window.wp !== 'undefined' && window.wp.hooks) {
-        window.wp.hooks.addAction('lsbg_dropdown_init', 'lsbg', initAllContexts);
     }
     
 })();

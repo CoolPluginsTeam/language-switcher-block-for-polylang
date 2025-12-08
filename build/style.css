@@ -2,11 +2,11 @@
  * Frontend styles for Language Switcher Block
  */
 
+/* Base Block Styles */
 .wp-block-lsbg-language-switcher {
     margin: 1em 0;
 }
 
-/* Language switcher preview */
 .wp-block-lsbg-language-switcher ul,
 ul.wp-block-lsbg-language-switcher {
     list-style: none;
@@ -16,6 +16,13 @@ ul.wp-block-lsbg-language-switcher {
     flex-wrap: wrap;
 }
 
+.wp-block-lsbg-language-switcher ul li,
+ul.wp-block-lsbg-language-switcher li {
+    margin: 0;
+    padding: 0;
+}
+
+/* Layout Variants */
 .lsbg-layout-horizontal {
     display: flex;
     flex-direction: row;
@@ -26,37 +33,10 @@ ul.wp-block-lsbg-language-switcher {
 .lsbg-layout-vertical {
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
     align-items: flex-start;
 }
 
-.wp-block-lsbg-language-switcher ul li,
-ul.wp-block-lsbg-language-switcher li {
-    margin: 0;
-    padding: 0;
-}
-
-.wp-block-lsbg-language-switcher ul li a,
-ul.wp-block-lsbg-language-switcher li a {
-    display: inline-block;
-    padding: 0.5em 1em;
-    text-decoration: none;
-    border: none;
-    background: none;
-}
-
-.wp-block-lsbg-language-switcher ul li.current-lang a,
-ul.wp-block-lsbg-language-switcher li.current-lang a {
-    background: none;
-}
-
-/* Dropdown style */
-.wp-block-lsbg-language-switcher select {
-    min-width: 200px;
-    padding: 0.5em;
-}
-
-/* Custom Dropdown with Flags */
+/* Dropdown Layout Styles */
 .lsbg-dropdown-container {
     position: relative;
     display: inline-block;
@@ -95,17 +75,8 @@ ul.wp-block-lsbg-language-switcher li.current-lang a {
     margin-right: 0.5em;
 }
 
-.lsbg-dropdown-button-image img.flag {
-    vertical-align: middle;
-}
-
 .lsbg-dropdown-button-name {
     flex: 1;
-}
-
-/* Only add margin when there's an image before the name */
-.lsbg-dropdown-button-image + .lsbg-dropdown-button-name {
-    margin-left: 0;
 }
 
 .lsbg-dropdown-arrow {
@@ -144,8 +115,8 @@ ul.wp-block-lsbg-language-switcher li.current-lang a {
 .lsbg-dropdown-item a {
     display: flex !important;
     align-items: center;
-    width: 78%;
-    padding: 0.5em;
+    width: 100%;
+    padding: 0.5em 1em;
     text-decoration: none;
     color: #333;
     transition: background-color 0.2s ease;
@@ -168,36 +139,18 @@ ul.wp-block-lsbg-language-switcher li.current-lang a {
     margin-right: 0.5em;
 }
 
-.lsbg-dropdown-item-image img.flag {
-    vertical-align: middle;
-}
-
 .lsbg-dropdown-item-name {
     flex: 1;
 }
 
-/* Only add margin when there's an image before the name */
-.lsbg-dropdown-item-image + .lsbg-dropdown-item-name {
-    margin-left: 0;
+/* Language Codes */
+.lsbg-language-code {
+    font-size: 0.85em;
+    opacity: 0.7;
+    margin-left: 0.25em;
 }
 
-/* Legacy selectors for backwards compatibility */
-.lsbg-dropdown-item img.flag {
-    vertical-align: middle;
-    margin-right: 0.5em;
-}
-
-.lsbg-dropdown-item span {
-    flex: 1;
-}
-
-/* Flags */
-.wp-block-lsbg-language-switcher img.flag {
-    vertical-align: middle;
-    margin-right: 0.25em;
-}
-
-/* New LSEP structure with flexbox for horizontal and vertical layouts */
+/* Horizontal and Vertical Layout Items */
 .lsep-lang-item {
     margin: 0;
     padding: 0;
@@ -232,16 +185,22 @@ ul.wp-block-lsbg-language-switcher li.current-lang a {
     vertical-align: middle;
 }
 
-.lsep-lang-name {
+.lsep-lang-name,
+.lsep-lang-code {
     display: inline-flex;
     align-items: center;
 }
 
 .lsep-lang-code {
-    display: inline-flex;
-    align-items: center;
     font-size: 0.85em;
     opacity: 0.7;
+}
+
+/* Flag Images */
+.wp-block-lsbg-language-switcher img.flag,
+.lsbg-dropdown-button-image img.flag,
+.lsbg-dropdown-item-image img.flag {
+    vertical-align: middle;
 }
 
 /* Accessibility */
