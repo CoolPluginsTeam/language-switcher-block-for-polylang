@@ -315,7 +315,7 @@ class LSBG_Language_Switcher_Block {
 			),
 			'flagRatio'     => array(
 				'type'    => 'string',
-				'default' => '1/1',
+				'default' => '4/3',
 			),
 			'flagWidth'     => array(
 				'type'    => 'number',

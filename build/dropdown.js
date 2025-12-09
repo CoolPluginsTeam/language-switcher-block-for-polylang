@@ -35,7 +35,7 @@
      * @param {HTMLElement} container - Dropdown container element
      */
     function initDropdown(container) {
-        var button = container.querySelector('.lsep-lang-item');
+        var button = container.querySelector('.lsbg-dropdown-button');
         var menu = container.querySelector('.lsbg-dropdown-menu');
         
         if (!button || !menu) {
@@ -64,6 +64,16 @@
             e.preventDefault();
             e.stopPropagation();
             toggleDropdown();
+        });
+        
+        // Hover functionality - open on hover
+        container.addEventListener('mouseenter', function() {
+            openDropdown();
+        });
+        
+        // Close on mouse leave
+        container.addEventListener('mouseleave', function() {
+            closeDropdown();
         });
         
         // Keyboard navigation

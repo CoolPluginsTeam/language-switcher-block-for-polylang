@@ -100,7 +100,7 @@
             },
             flagRatio: {
                 type: 'string',
-                default: '1/1'
+                default: '4/3'
             },
             flagWidth: {
                 type: 'number',
@@ -309,10 +309,10 @@
                     el(SelectControl, {
                         key: 'flagRatio',
                         label: __('Flag Ratio', 'language-switcher-block-for-polylang'),
-                        value: attributes.flagRatio || '1/1',
+                        value: attributes.flagRatio || '4/3',
                         options: [
-                            { label: '1:1', value: '1/1' },
-                            { label: '4:3', value: '4/3' }
+                            { label: '4:3', value: '4/3' },
+                            { label: '1:1', value: '1/1' }
                         ],
                         onChange: function(value) {
                             setAttributes({ flagRatio: value });

@@ -59,7 +59,7 @@ function lsbg_get_border_values( $attributes ) {
  */
 function lsbg_get_flag_values( $attributes ) {
 	return array(
-		'ratio'  => isset( $attributes['flagRatio'] ) ? sanitize_text_field( $attributes['flagRatio'] ) : '1/1',
+		'ratio'  => isset( $attributes['flagRatio'] ) ? sanitize_text_field( $attributes['flagRatio'] ) : '4/3',
 		'width'  => isset( $attributes['flagWidth'] ) ? intval( $attributes['flagWidth'] ) : 24,
 		'radius' => isset( $attributes['flagRadius'] ) ? intval( $attributes['flagRadius'] ) : 0,
 	);
