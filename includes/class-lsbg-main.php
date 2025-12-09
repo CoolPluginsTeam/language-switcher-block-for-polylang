@@ -381,6 +381,11 @@ class LSBG_Language_Switcher_Block {
 	 * @return string Flag HTML or empty string.
 	 */
 	private function get_custom_flag( $lang ) {
+		// Validate that $lang is an array with required keys
+		if ( ! is_array( $lang ) || empty( $lang['flag'] ) || empty( $lang['name'] ) ) {
+			return '';
+		}
+
 		$flag_url     = $lang['flag'];
 		$country_code = lsbg_get_flag_code( $flag_url );
 		$flag         = array(
@@ -623,6 +628,24 @@ class LSBG_Language_Switcher_Block {
 			return '';
 		}
 
+		// Manually filter languages if settings are enabled (needed for editor/REST context)
+		if ( $hide_current || $hide_if_no_translation ) {
+			$languages = array_filter(
+				$languages,
+				function( $lang ) use ( $hide_current, $hide_if_no_translation ) {
+					// Filter out current language if hide_current is enabled
+					if ( $hide_current && ! empty( $lang['current_lang'] ) ) {
+						return false;
+					}
+					// Filter out languages with no translation if hide_if_no_translation is enabled
+					if ( $hide_if_no_translation && ! empty( $lang['no_translation'] ) ) {
+						return false;
+					}
+					return true;
+				}
+			);
+		}
+
 		$unique_class       = $this->get_unique_block_id( $attributes );
 		$layout_class       = 'lsbg-layout-' . esc_attr( $layout );
 		$custom_class       = isset( $attributes['className'] ) ? $attributes['className'] : '';
@@ -715,6 +738,24 @@ class LSBG_Language_Switcher_Block {
 			return '';
 		}
 
+		// Manually filter languages if settings are enabled (needed for editor/REST context)
+		if ( $hide_current || $hide_if_no_translation ) {
+			$languages = array_filter(
+				$languages,
+				function( $lang ) use ( $hide_current, $hide_if_no_translation ) {
+					// Filter out current language if hide_current is enabled
+					if ( $hide_current && ! empty( $lang['current_lang'] ) ) {
+						return false;
+					}
+					// Filter out languages with no translation if hide_if_no_translation is enabled
+					if ( $hide_if_no_translation && ! empty( $lang['no_translation'] ) ) {
+						return false;
+					}
+					return true;
+				}
+			);
+		}
+
 		wp_enqueue_script( 'lsbg-custom-dropdown' );
 
 		$unique_class = $this->get_unique_block_id( $attributes );
@@ -731,6 +772,11 @@ class LSBG_Language_Switcher_Block {
 
 		if ( ! $current_lang ) {
 			$current_lang = reset( $languages );
+		}
+
+		// If no valid current language found, return empty
+		if ( ! is_array( $current_lang ) || empty( $current_lang ) ) {
+			return '';
 		}
 
 		$layout_class       = 'lsbg-layout-dropdown lsbg-custom-dropdown';

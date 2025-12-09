@@ -96,7 +96,7 @@
             },
             borderWidth: {
                 type: 'string',
-                default: ''
+                default: '0px'
             },
             flagRatio: {
                 type: 'string',
