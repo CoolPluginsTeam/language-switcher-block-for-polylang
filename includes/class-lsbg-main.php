@@ -508,9 +508,6 @@ class LSBG_Language_Switcher_Block {
 			$css .= 'background-color: ' . esc_attr( $attributes['backgroundColor'] ) . ' !important;';
 		}
 		
-		// if ( $has_padding ) {
-		// 	$css .= 'padding: ' . implode( 'px ', $padding ) . 'px !important;';
-		// }
 		
 		$css .= '}';
 	}
@@ -577,11 +574,12 @@ class LSBG_Language_Switcher_Block {
 			return '';
 		}
 
-		$layout     = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
-		$show_names = ! empty( $attributes['show_names'] );
-		$show_flags = ! empty( $attributes['show_flags'] );
+		$layout              = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
+		$show_names          = ! empty( $attributes['show_names'] );
+		$show_flags          = ! empty( $attributes['show_flags'] );
+		$show_language_codes = ! empty( $attributes['show_language_codes'] );
 
-		if ( ! $show_names && ! $show_flags ) {
+		if ( ! $show_names && ! $show_flags && ! $show_language_codes ) {
 			return '';
 		}
 
@@ -760,6 +758,8 @@ class LSBG_Language_Switcher_Block {
 				$output .= ' <span class="lsbg-language-code">' . esc_html( $current_lang['slug'] ) . '</span>';
 			}
 			$output .= '</div>';
+		} elseif ( $show_language_codes && ! empty( $current_lang['slug'] ) ) {
+			$output .= '<div class="lsbg-dropdown-button-name"><span class="lsbg-language-code">' . esc_html( $current_lang['slug'] ) . '</span></div>';
 		}
 
 	$output .= '<span class="lsbg-dropdown-arrow" aria-hidden="true">▼</span>';
@@ -792,6 +792,8 @@ class LSBG_Language_Switcher_Block {
 					$output .= ' <span class="lsbg-language-code">' . esc_html( $lang['slug'] ) . '</span>';
 				}
 				$output .= '</div>';
+			} elseif ( $show_language_codes && ! empty( $lang['slug'] ) ) {
+				$output .= '<div class="lsbg-dropdown-item-name"><span class="lsbg-language-code">' . esc_html( $lang['slug'] ) . '</span></div>';
 			}
 
 			$output .= '</a></li>';
