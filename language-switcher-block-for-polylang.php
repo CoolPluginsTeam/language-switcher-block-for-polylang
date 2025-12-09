@@ -50,7 +50,9 @@ function lsbg_check_dependency() {
 			add_action( 'admin_notices', 'lsbg_dependency_notice' );
 			
 			// Prevent further execution
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only suppressing WordPress's own activation message, not processing user data.
 			if ( isset( $_GET['activate'] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Safe to unset WordPress internal parameter.
 				unset( $_GET['activate'] );
 			}
 		}
@@ -89,11 +91,11 @@ function lsbg_activation_check() {
 			sprintf(
 				'<h1>%s</h1><p>%s</p><p><a href="%s">%s</a></p>',
 				esc_html__( 'Plugin Activation Failed', 'language-switcher-block-for-polylang' ),
-				sprintf(
-					/* translators: %s: Plugin name */
-					esc_html__( '%s requires Polylang or Polylang Pro to be installed and activated.', 'language-switcher-block-for-polylang' ),
-					'<strong>' . LSBG_PLUGIN_NAME . '</strong>'
-				),
+			sprintf(
+				/* translators: %s: Plugin name */
+				esc_html__( '%s requires Polylang or Polylang Pro to be installed and activated.', 'language-switcher-block-for-polylang' ),
+				'<strong>' . esc_html( LSBG_PLUGIN_NAME ) . '</strong>'
+			),
 				esc_url( admin_url( 'plugins.php' ) ),
 				esc_html__( 'Return to Plugins', 'language-switcher-block-for-polylang' )
 			),
