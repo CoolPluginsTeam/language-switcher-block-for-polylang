@@ -151,17 +151,26 @@ ul.wp-block-lsbg-language-switcher li {
     align-items: center;
     gap: 0.5em;
     padding: 0.5em 1em;
-    text-decoration: none;
+    text-decoration: none !important;
     color: inherit;
     transition: background-color 0.2s ease;
 }
 
-.lsep-lang-item a:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+.lsep-lang-item a:hover,
+.lsep-lang-item a:focus {
+    outline: none !important;
+    color: inherit !important;
 }
 
 .lsep-lang-item.current-lang a {
     font-weight: 600;
+}
+
+.lsbg-dropdown-button:hover,
+.lsbg-dropdown-button:focus {
+    outline: none !important;
+    color: inherit !important;
+    background-color: transparent !important;
 }
 
 .lsep-lang-image {

@@ -9,10 +9,8 @@
     var SelectControl = components.SelectControl;
     var TabPanel = components.TabPanel;
     var BoxControl = components.__experimentalBoxControl || components.BoxControl;
-    var BorderControl = components.__experimentalBorderControl || components.BorderControl;
     var RangeControl = components.RangeControl;
     var ColorPalette = components.ColorPalette;
-    var FontSizePicker = components.FontSizePicker;
     var ServerSideRender = serverSideRender;
     var __ = i18n.__;
 
@@ -97,6 +95,38 @@
             borderWidth: {
                 type: 'string',
                 default: '0px'
+            },
+            borderWidthTop: {
+                type: 'number',
+                default: 0
+            },
+            borderWidthRight: {
+                type: 'number',
+                default: 0
+            },
+            borderWidthBottom: {
+                type: 'number',
+                default: 0
+            },
+            borderWidthLeft: {
+                type: 'number',
+                default: 0
+            },
+            borderRadiusTopLeft: {
+                type: 'number',
+                default: 0
+            },
+            borderRadiusTopRight: {
+                type: 'number',
+                default: 0
+            },
+            borderRadiusBottomRight: {
+                type: 'number',
+                default: 0
+            },
+            borderRadiusBottomLeft: {
+                type: 'number',
+                default: 0
             },
             flagRatio: {
                 type: 'string',
@@ -273,34 +303,113 @@
                 return controls;
             };
 
-            // Helper function to create border control
-            var createBorderControl = function() {
-                if (!BorderControl) {
-                    return null;
+            // Helper function to create border controls
+            var createBorderControls = function() {
+                var controls = [];
+
+                // Border Color Control
+                controls.push(
+                    el('div', {
+                        key: 'borderColorWrapper',
+                        style: { marginBottom: '16px' }
+                    },
+                        el('label', {
+                            style: {
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontSize: '11px',
+                                fontWeight: '500',
+                                textTransform: 'uppercase'
+                            }
+                        }, __('Border Color', 'language-switcher-block-for-polylang')),
+                        el(ColorPalette, {
+                            value: attributes.borderColor,
+                            onChange: function(color) {
+                                setAttributes({ borderColor: color });
+                            },
+                            clearable: true
+                        })
+                    )
+                );
+
+                // Border Style Control
+                controls.push(
+                    el(SelectControl, {
+                        key: 'borderStyle',
+                        label: __('Border Style', 'language-switcher-block-for-polylang'),
+                        value: attributes.borderStyle || 'solid',
+                        options: [
+                            { label: __('Solid', 'language-switcher-block-for-polylang'), value: 'solid' },
+                            { label: __('Dashed', 'language-switcher-block-for-polylang'), value: 'dashed' },
+                            { label: __('Dotted', 'language-switcher-block-for-polylang'), value: 'dotted' },
+                            { label: __('Double', 'language-switcher-block-for-polylang'), value: 'double' },
+                            { label: __('None', 'language-switcher-block-for-polylang'), value: 'none' }
+                        ],
+                        onChange: function(value) {
+                            setAttributes({ borderStyle: value });
+                        },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
+                    })
+                );
+
+                // Border Width Control using BoxControl
+                if (BoxControl) {
+                    var borderWidthValues = {
+                        top: (attributes.borderWidthTop || 0) + 'px',
+                        right: (attributes.borderWidthRight || 0) + 'px',
+                        bottom: (attributes.borderWidthBottom || 0) + 'px',
+                        left: (attributes.borderWidthLeft || 0) + 'px'
+                    };
+
+                    controls.push(
+                        el(BoxControl, {
+                            key: 'borderWidth',
+                            label: __('Border Width', 'language-switcher-block-for-polylang'),
+                            values: borderWidthValues,
+                            onChange: function(newValues) {
+                                var newAttrs = {};
+                                if (newValues) {
+                                    newAttrs.borderWidthTop = parseInt(newValues.top) || 0;
+                                    newAttrs.borderWidthRight = parseInt(newValues.right) || 0;
+                                    newAttrs.borderWidthBottom = parseInt(newValues.bottom) || 0;
+                                    newAttrs.borderWidthLeft = parseInt(newValues.left) || 0;
+                                }
+                                setAttributes(newAttrs);
+                            }
+                        })
+                    );
                 }
 
-                var borderValue = {};
-                if (attributes.borderColor) {
-                    borderValue.color = attributes.borderColor;
-                }
-                if (attributes.borderStyle) {
-                    borderValue.style = attributes.borderStyle;
-                }
-                if (attributes.borderWidth) {
-                    borderValue.width = attributes.borderWidth;
+                // Border Radius Control using BoxControl
+                if (BoxControl) {
+                    var borderRadiusValues = {
+                        top: (attributes.borderRadiusTopLeft || 0) + 'px',
+                        right: (attributes.borderRadiusTopRight || 0) + 'px',
+                        bottom: (attributes.borderRadiusBottomRight || 0) + 'px',
+                        left: (attributes.borderRadiusBottomLeft || 0) + 'px'
+                    };
+
+                    controls.push(
+                        el(BoxControl, {
+                            key: 'borderRadius',
+                            label: __('Border Radius', 'language-switcher-block-for-polylang'),
+                            values: borderRadiusValues,
+                            onChange: function(newValues) {
+                                var newAttrs = {};
+                                if (newValues) {
+                                    newAttrs.borderRadiusTopLeft = parseInt(newValues.top) || 0;
+                                    newAttrs.borderRadiusTopRight = parseInt(newValues.right) || 0;
+                                    newAttrs.borderRadiusBottomRight = parseInt(newValues.bottom) || 0;
+                                    newAttrs.borderRadiusBottomLeft = parseInt(newValues.left) || 0;
+                                }
+                                setAttributes(newAttrs);
+                            }
+                        })
+                    );
                 }
 
-                return el(BorderControl, {
-                    label: __('Border', 'language-switcher-block-for-polylang'),
-                    value: borderValue,
-                    onChange: function(newBorder) {
-                        setAttributes({
-                            borderColor: newBorder && newBorder.color ? newBorder.color : '',
-                            borderStyle: newBorder && newBorder.style ? newBorder.style : 'solid',
-                            borderWidth: newBorder && newBorder.width ? newBorder.width : ''
-                        });
-                    }
-                });
+                return controls;
             };
 
             // Helper function to create flag controls
@@ -467,7 +576,7 @@
                                             title: __('Border', 'language-switcher-block-for-polylang'),
                                             initialOpen: false
                                         },
-                                        createBorderControl()
+                                        createBorderControls()
                                     )
                                 ];
 

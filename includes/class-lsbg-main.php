@@ -311,7 +311,39 @@ class LSBG_Language_Switcher_Block {
 			),
 			'borderWidth'   => array(
 				'type'    => 'string',
-				'default' => '',
+				'default' => '0px',
+			),
+			'borderWidthTop'    => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'borderWidthRight'  => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'borderWidthBottom' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'borderWidthLeft'   => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'borderRadiusTopLeft'    => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'borderRadiusTopRight'   => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'borderRadiusBottomRight' => array(
+				'type'    => 'number',
+				'default' => 0,
+			),
+			'borderRadiusBottomLeft'  => array(
+				'type'    => 'number',
+				'default' => 0,
 			),
 			'flagRatio'     => array(
 				'type'    => 'string',
@@ -413,7 +445,9 @@ class LSBG_Language_Switcher_Block {
 
 		$has_margin  = array_sum( $margin ) > 0;
 		$has_padding = array_sum( $padding ) > 0;
-		$has_border  = ! empty( $border['width'] ) && ! empty( $border['color'] );
+		// Check if border has color and either unified width or individual widths
+		$has_border  = ! empty( $border['color'] ) && ( ! empty( $border['width'] ) || $border['has_individual_widths'] );
+		$has_border_radius = $border['has_border_radius'];
 		$show_flags  = ! empty( $attributes['show_flags'] );
 		
 		// Typography attributes
@@ -423,7 +457,7 @@ class LSBG_Language_Switcher_Block {
 		$has_background_color = ! empty( $attributes['backgroundColor'] );
 		$has_typography = $has_font_size || $has_font_family || $has_text_color || $has_background_color;
 
-		if ( ! $has_margin && ! $has_padding && ! $has_border && ! $show_flags && ! $has_typography ) {
+		if ( ! $has_margin && ! $has_padding && ! $has_border && ! $has_border_radius && ! $show_flags && ! $has_typography ) {
 			return '';
 		}
 
@@ -442,7 +476,18 @@ class LSBG_Language_Switcher_Block {
 		}
 
 		if ( $has_border ) {
-			$css .= 'border: ' . $border['width'] . ' ' . $border['style'] . ' ' . $border['color'] . ';';
+			// Use individual border widths if available, otherwise use unified width
+			if ( $border['has_individual_widths'] ) {
+				$css .= 'border-color: ' . $border['color'] . ';';
+				$css .= 'border-style: ' . $border['style'] . ';';
+				$css .= 'border-width: ' . $border['top'] . 'px ' . $border['right'] . 'px ' . $border['bottom'] . 'px ' . $border['left'] . 'px;';
+			} else {
+				$css .= 'border: ' . $border['width'] . ' ' . $border['style'] . ' ' . $border['color'] . ';';
+			}
+		}
+
+		if ( $has_border_radius ) {
+			$css .= 'border-radius: ' . $border['radius_top_left'] . 'px ' . $border['radius_top_right'] . 'px ' . $border['radius_bottom_right'] . 'px ' . $border['radius_bottom_left'] . 'px;';
 		}
 
 		if ( $has_font_size ) {
@@ -463,8 +508,8 @@ class LSBG_Language_Switcher_Block {
 
 		$css .= '}';
 
-	// For dropdown container - apply margin, padding, border, background
-	if ( $has_margin || $has_padding || $has_border || $has_background_color ) {
+	// For dropdown container - apply margin, padding, border, background, radius
+	if ( $has_margin || $has_padding || $has_border || $has_border_radius || $has_background_color ) {
 		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-container {';
 
 		if ( $has_margin ) {
@@ -476,7 +521,18 @@ class LSBG_Language_Switcher_Block {
 		}
 
 		if ( $has_border ) {
-			$css .= 'border: ' . $border['width'] . ' ' . $border['style'] . ' ' . $border['color'] . ' !important;';
+			// Use individual border widths if available, otherwise use unified width
+			if ( $border['has_individual_widths'] ) {
+				$css .= 'border-color: ' . $border['color'] . ' !important;';
+				$css .= 'border-style: ' . $border['style'] . ' !important;';
+				$css .= 'border-width: ' . $border['top'] . 'px ' . $border['right'] . 'px ' . $border['bottom'] . 'px ' . $border['left'] . 'px !important;';
+			} else {
+				$css .= 'border: ' . $border['width'] . ' ' . $border['style'] . ' ' . $border['color'] . ' !important;';
+			}
+		}
+
+		if ( $has_border_radius ) {
+			$css .= 'border-radius: ' . $border['radius_top_left'] . 'px ' . $border['radius_top_right'] . 'px ' . $border['radius_bottom_right'] . 'px ' . $border['radius_bottom_left'] . 'px !important;';
 		}
 
 		if ( $has_background_color ) {
@@ -505,14 +561,17 @@ class LSBG_Language_Switcher_Block {
 		$css .= '}';
 	}
 
-	// For dropdown menu (ul) - background color and padding
-	if ( $has_background_color || $has_padding ) {
+	// For dropdown menu (ul) - background color, padding, and border radius
+	if ( $has_background_color || $has_padding || $has_border_radius ) {
 		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-menu {';
 		
 		if ( $has_background_color ) {
 			$css .= 'background-color: ' . esc_attr( $attributes['backgroundColor'] ) . ' !important;';
 		}
 		
+		if ( $has_border_radius ) {
+			$css .= 'border-radius: ' . $border['radius_top_left'] . 'px ' . $border['radius_top_right'] . 'px ' . $border['radius_bottom_right'] . 'px ' . $border['radius_bottom_left'] . 'px !important;';
+		}
 		
 		$css .= '}';
 	}
@@ -815,8 +874,9 @@ class LSBG_Language_Switcher_Block {
 	foreach ( $languages as $lang ) {
 		$is_current = ! empty( $lang['current_lang'] );
 		
-		// Skip the current language - don't show it in the dropdown list
-		if ( $is_current ) {
+		// Skip the language that's being shown in the button
+		// This handles both the actual current language and the first alternative when hide_current is enabled
+		if ( $is_current || ( isset( $lang['slug'] ) && isset( $current_lang['slug'] ) && $lang['slug'] === $current_lang['slug'] ) ) {
 			continue;
 		}
 
