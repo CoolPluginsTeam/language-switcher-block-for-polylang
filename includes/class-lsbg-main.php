@@ -628,6 +628,57 @@ class LSBG_Language_Switcher_Block {
 	}
 
 	/**
+	 * Get current language slug in both frontend and editor contexts
+	 *
+	 * @return string Current language slug.
+	 */
+	private function get_current_language_slug() {
+		if ( ! function_exists( 'pll_current_language' ) ) {
+			return '';
+		}
+
+		// Try to get post language in editor/REST context
+		global $post, $wp;
+		
+		$post_id = null;
+
+		// Check if we're in a REST API request (editor context)
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			// Try to extract post ID from REST route
+			if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
+				// Match patterns like /wp/v2/posts/123 or /wp/v2/pages/123
+				if ( preg_match( '#/wp/v2/(?:posts|pages|[^/]+)/(\d+)#', $_SERVER['REQUEST_URI'], $matches ) ) {
+					$post_id = intval( $matches[1] );
+				}
+			}
+
+			// Check $_GET for post_id
+			if ( ! $post_id && ! empty( $_GET['post_id'] ) ) {
+				$post_id = intval( $_GET['post_id'] );
+			}
+
+			// If we found a post ID, get its language
+			if ( $post_id && function_exists( 'pll_get_post_language' ) ) {
+				$lang = pll_get_post_language( $post_id );
+				if ( $lang ) {
+					return $lang;
+				}
+			}
+		}
+
+		// If we have a post object and it has a language, use that
+		if ( isset( $post->ID ) && function_exists( 'pll_get_post_language' ) ) {
+			$lang = pll_get_post_language( $post->ID );
+			if ( $lang ) {
+				return $lang;
+			}
+		}
+
+		// Fallback to pll_current_language() for frontend
+		return pll_current_language();
+	}
+
+	/**
 	 * Render language switcher block
 	 *
 	 * @param array $attributes Block attributes.
@@ -672,13 +723,17 @@ class LSBG_Language_Switcher_Block {
 		$hide_current           = ! empty( $attributes['hide_current'] );
 		$hide_if_no_translation = ! empty( $attributes['hide_if_no_translation'] );
 
+		// Get current language slug (works in both frontend and editor contexts)
+		$current_lang_slug = $this->get_current_language_slug();
+		
+
 		$args = array(
 			'echo'                   => 0,
 			'raw'                    => 1,
 			'show_flags'             => 0,
 			'show_names'             => $show_names,
-			'hide_current'           => $hide_current,
-			'hide_if_no_translation' => $hide_if_no_translation,
+			'hide_current'           => false,
+			'hide_if_no_translation' => false,
 		);
 
 		$languages = pll_the_languages( $args );
@@ -687,13 +742,13 @@ class LSBG_Language_Switcher_Block {
 			return '';
 		}
 
-		// Manually filter languages if settings are enabled (needed for editor/REST context)
+		// Manually filter languages using our correct language detection (needed for editor/REST context)
 		if ( $hide_current || $hide_if_no_translation ) {
 			$languages = array_filter(
 				$languages,
-				function( $lang ) use ( $hide_current, $hide_if_no_translation ) {
+				function( $lang ) use ( $hide_current, $hide_if_no_translation, $current_lang_slug ) {
 					// Filter out current language if hide_current is enabled
-					if ( $hide_current && ! empty( $lang['current_lang'] ) ) {
+					if ( $hide_current && isset( $lang['slug'] ) && $lang['slug'] === $current_lang_slug ) {
 						return false;
 					}
 					// Filter out languages with no translation if hide_if_no_translation is enabled
@@ -715,7 +770,7 @@ class LSBG_Language_Switcher_Block {
 		$switcher_output    = '';
 
 		foreach ( $languages as $lang ) {
-			$is_current = ! empty( $lang['current_lang'] );
+			$is_current = isset( $lang['slug'] ) && $lang['slug'] === $current_lang_slug;
 
 			$switcher_output .= '<li class="lsep-lang-item' . ( $is_current ? ' current-lang' : '' ) . '">';
 
@@ -782,13 +837,17 @@ class LSBG_Language_Switcher_Block {
 		$hide_current           = ! empty( $attributes['hide_current'] );
 		$hide_if_no_translation = ! empty( $attributes['hide_if_no_translation'] );
 
+		// Get current language slug (works in both frontend and editor contexts)
+		$current_lang_slug = $this->get_current_language_slug();
+
+
 		$args = array(
 			'echo'                   => 0,
 			'raw'                    => 1,
 			'show_flags'             => 0,
 			'show_names'             => $show_names,
-			'hide_current'           => $hide_current,
-			'hide_if_no_translation' => $hide_if_no_translation,
+			'hide_current'           => false,
+			'hide_if_no_translation' => false,
 		);
 
 		$languages = pll_the_languages( $args );
@@ -797,13 +856,13 @@ class LSBG_Language_Switcher_Block {
 			return '';
 		}
 
-		// Manually filter languages if settings are enabled (needed for editor/REST context)
+		// Manually filter languages using our correct language detection (needed for editor/REST context)
 		if ( $hide_current || $hide_if_no_translation ) {
 			$languages = array_filter(
 				$languages,
-				function( $lang ) use ( $hide_current, $hide_if_no_translation ) {
+				function( $lang ) use ( $hide_current, $hide_if_no_translation, $current_lang_slug ) {
 					// Filter out current language if hide_current is enabled
-					if ( $hide_current && ! empty( $lang['current_lang'] ) ) {
+					if ( $hide_current && isset( $lang['slug'] ) && $lang['slug'] === $current_lang_slug ) {
 						return false;
 					}
 					// Filter out languages with no translation if hide_if_no_translation is enabled
@@ -821,9 +880,10 @@ class LSBG_Language_Switcher_Block {
 		$dropdown_id  = ++$this->dropdown_id;
 		$unique_id    = 'lsbg-dropdown-' . $dropdown_id . '-' . substr( $unique_class, -8 );
 
+		// Find current language using pll_current_language()
 		$current_lang = null;
 		foreach ( $languages as $lang ) {
-			if ( ! empty( $lang['current_lang'] ) ) {
+			if ( isset( $lang['slug'] ) && $lang['slug'] === $current_lang_slug ) {
 				$current_lang = $lang;
 				break;
 			}
@@ -872,7 +932,7 @@ class LSBG_Language_Switcher_Block {
 	$output .= '<ul class="lsbg-dropdown-menu" role="listbox" style="display: none;">';
 
 	foreach ( $languages as $lang ) {
-		$is_current = ! empty( $lang['current_lang'] );
+		$is_current = isset( $lang['slug'] ) && $lang['slug'] === $current_lang_slug;
 		
 		// Skip the language that's being shown in the button
 		// This handles both the actual current language and the first alternative when hide_current is enabled

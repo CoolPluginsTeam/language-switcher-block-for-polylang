@@ -56,6 +56,7 @@ ul.wp-block-lsbg-language-switcher li {
     cursor: pointer;
     font-size: 1em;
     text-align: left;
+    color: inherit !important;
     transition: all 0.2s ease;
 }
 
@@ -127,7 +128,7 @@ ul.wp-block-lsbg-language-switcher li {
 }
 
 .lsbg-dropdown-item-name {
-    flex: 1;
+    display: flex !important;
 }
 
 .lsbg-dropdown-item .lsep-lang-image {
