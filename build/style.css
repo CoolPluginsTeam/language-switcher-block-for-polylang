@@ -40,7 +40,7 @@ ul.wp-block-lsbg-language-switcher li {
 .lsbg-dropdown-container {
     position: relative;
     display: inline-block;
-    padding: 0.5em;
+    padding: 0.5em 1em;
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -110,9 +110,10 @@ ul.wp-block-lsbg-language-switcher li {
     display: flex !important;
     align-items: center !important;
     width: 100% !important;
-    padding: 0.5em 1em !important;
+    padding: 6px 8px !important;
+    white-space: nowrap !important;
     text-decoration: none !important;
-    color: #333;
+    color: inherit !important;
     transition: background-color 0.2s ease !important;
 }
 
