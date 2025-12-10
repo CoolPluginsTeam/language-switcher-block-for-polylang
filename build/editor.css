@@ -29,3 +29,7 @@
 .lsbg-inspector-tabs .components-tab-panel__tabs-item.active-tab {
     border-bottom: 2px solid #1e1e1e;
 }
+
+.editor-styles-wrapper a{
+    color: inherit !important;
+}

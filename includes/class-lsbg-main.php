@@ -499,7 +499,7 @@ class LSBG_Language_Switcher_Block {
 		}
 
 		if ( $has_text_color ) {
-			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . ';';
+			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . '!important;';
 		}
 
 		if ( $has_background_color ) {
@@ -596,7 +596,7 @@ class LSBG_Language_Switcher_Block {
 		}
 
 		if ( $has_text_color ) {
-			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . ';';
+			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . '!important;';
 		}
 
 		$css .= '}';
