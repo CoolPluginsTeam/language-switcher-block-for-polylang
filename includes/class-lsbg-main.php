@@ -373,6 +373,10 @@ class LSBG_Language_Switcher_Block {
 				'type'    => 'string',
 				'default' => '',
 			),
+			'textTransform' => array(
+				'type'    => 'string',
+				'default' => 'none',
+			),
 		);
 
 		foreach ( $switcher_options as $option => $data ) {
@@ -455,7 +459,8 @@ class LSBG_Language_Switcher_Block {
 		$has_font_family = ! empty( $attributes['fontFamily'] );
 		$has_text_color = ! empty( $attributes['textColor'] );
 		$has_background_color = ! empty( $attributes['backgroundColor'] );
-		$has_typography = $has_font_size || $has_font_family || $has_text_color || $has_background_color;
+		$has_text_transform = ! empty( $attributes['textTransform'] ) && $attributes['textTransform'] !== 'none';
+		$has_typography = $has_font_size || $has_font_family || $has_text_color || $has_background_color || $has_text_transform;
 
 		if ( ! $has_margin && ! $has_padding && ! $has_border && ! $has_border_radius && ! $show_flags && ! $has_typography ) {
 			return '';
@@ -506,6 +511,10 @@ class LSBG_Language_Switcher_Block {
 			$css .= 'background-color: ' . esc_attr( $attributes['backgroundColor'] ) . ';';
 		}
 
+		if ( $has_text_transform ) {
+			$css .= 'text-transform: ' . esc_attr( $attributes['textTransform'] ) . ';';
+		}
+
 		$css .= '}';
 
 	// For dropdown container - apply margin, padding, border, background, radius
@@ -543,7 +552,7 @@ class LSBG_Language_Switcher_Block {
 	}
 
 	// For dropdown button - only typography styles
-	if ( $has_font_size || $has_font_family || $has_text_color ) {
+	if ( $has_font_size || $has_font_family || $has_text_color || $has_text_transform ) {
 		$css .= '.' . $block_class . '.lsbg-layout-dropdown .lsbg-dropdown-button {';
 
 		if ( $has_font_size ) {
@@ -556,6 +565,10 @@ class LSBG_Language_Switcher_Block {
 
 		if ( $has_text_color ) {
 			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . ' !important;';
+		}
+
+		if ( $has_text_transform ) {
+			$css .= 'text-transform: ' . esc_attr( $attributes['textTransform'] ) . ' !important;';
 		}
 
 		$css .= '}';
@@ -597,6 +610,10 @@ class LSBG_Language_Switcher_Block {
 
 		if ( $has_text_color ) {
 			$css .= 'color: ' . esc_attr( $attributes['textColor'] ) . '!important;';
+		}
+
+		if ( $has_text_transform ) {
+			$css .= 'text-transform: ' . esc_attr( $attributes['textTransform'] ) . ';';
 		}
 
 		$css .= '}';

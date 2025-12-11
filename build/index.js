@@ -18,7 +18,7 @@
     var settings = window.lsbgBlockSettings || { options: {} };
 
     registerBlockType('lsbg/language-switcher', {
-        title: __('Language Switcher', 'language-switcher-block-for-polylang'),
+        title: __('Language Switcher block for Polylang', 'language-switcher-block-for-polylang'),
         description: __('Display a language switcher for Polylang', 'language-switcher-block-for-polylang'),
         category: 'widgets',
         icon: 'translation',
@@ -155,6 +155,10 @@
             backgroundColor: {
                 type: 'string',
                 default: ''
+            },
+            textTransform: {
+                type: 'string',
+                default: 'none'
             }
         },
         supports: {
@@ -244,6 +248,26 @@
                         ],
                         onChange: function(value) {
                             setAttributes({ fontFamily: value });
+                        },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
+                    })
+                );
+
+                // Text Transform Control
+                controls.push(
+                    el(SelectControl, {
+                        key: 'textTransform',
+                        label: __('Text Transform', 'language-switcher-block-for-polylang'),
+                        value: attributes.textTransform || 'none',
+                        options: [
+                            { label: __('None', 'language-switcher-block-for-polylang'), value: 'none' },
+                            { label: __('Uppercase', 'language-switcher-block-for-polylang'), value: 'uppercase' },
+                            { label: __('Lowercase', 'language-switcher-block-for-polylang'), value: 'lowercase' },
+                            { label: __('Capitalize', 'language-switcher-block-for-polylang'), value: 'capitalize' }
+                        ],
+                        onChange: function(value) {
+                            setAttributes({ textTransform: value });
                         },
                         __next40pxDefaultSize: true,
                         __nextHasNoMarginBottom: true
