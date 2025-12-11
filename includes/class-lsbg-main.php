@@ -82,9 +82,25 @@ class LSBG_Language_Switcher_Block {
 	 * Load language switcher block
 	 */
 	public function load_blocks() {
+		if ( ! $this->check_polylang_dependency() ) {
+			return;
+		}
+
 		add_action( 'init', array( $this, 'register_language_switcher_block' ) );
 	}
 
+	/**
+	 * Check Polylang dependency
+	 *
+	 * @return bool
+	 */
+	private function check_polylang_dependency() {
+		if ( ! function_exists( 'PLL' ) && ! class_exists( 'Polylang' ) ) {
+			add_action( 'admin_notices', array( $this, 'polylang_missing_notice' ) );
+			return false;
+		}
+		return true;
+	}
 
 	/**
 	 * Display admin notice when Polylang is missing
@@ -111,12 +127,14 @@ class LSBG_Language_Switcher_Block {
 	 * Register language switcher block
 	 */
 	public function register_language_switcher_block() {
-		// Check if we have any languages configured (either from Polylang or manual)
-		if ( ! lsbg_is_polylang_active() ) {
-			// In manual mode, check if we have languages configured
-			$settings = LSBG_Settings::get_instance();
-			$manual_languages = $settings->get_manual_languages();
-			if ( empty( $manual_languages ) ) {
+		if ( ! function_exists( 'PLL' ) ) {
+			return;
+		}
+
+		$polylang = PLL();
+
+		if ( $polylang && isset( $polylang->model ) && method_exists( $polylang->model, 'has_languages' ) ) {
+			if ( ! $polylang->model->has_languages() ) {
 				return;
 			}
 		}
@@ -395,7 +413,7 @@ class LSBG_Language_Switcher_Block {
 	/**
 	 * Get custom flag URL for a language
 	 *
-	 * @param array $lang Language data from Polylang or manual configuration.
+	 * @param array $lang Language data from Polylang.
 	 * @return string Flag HTML or empty string.
 	 */
 	private function get_custom_flag( $lang ) {
@@ -404,38 +422,14 @@ class LSBG_Language_Switcher_Block {
 			return '';
 		}
 
-		$country_code = '';
-		
-		// If Polylang is active, extract flag code from Polylang URL
-		if ( lsbg_is_polylang_active() ) {
-			$flag_url     = $lang['flag'];
-			$country_code = lsbg_get_flag_code( $flag_url );
-		} else {
-			// In manual mode, flag is already the country code
-			$country_code = $lang['flag'];
-		}
-
-		if ( empty( $country_code ) ) {
-			return '';
-		}
-
-		$flag = array(
+		$flag_url     = $lang['flag'];
+		$country_code = lsbg_get_flag_code( $flag_url );
+		$flag         = array(
 			'path' => LSBG_PLUGIN_DIR . 'assets/flags/' . esc_html( $country_code ) . '.svg',
 			'url'  => esc_url( LSBG_PLUGIN_URL . 'assets/flags/' . esc_html( $country_code ) . '.svg' ),
 		);
-		$flag['src'] = $flag['url'];
-
-		// Use Polylang's method if available, otherwise generate HTML manually
-		if ( lsbg_is_polylang_active() && class_exists( 'PLL_Language' ) ) {
-			return \PLL_Language::get_flag_html( $flag, '', $lang['name'] );
-		} else {
-			// Generate flag HTML manually for manual mode
-			return sprintf(
-				'<img src="%s" alt="%s" width="16" height="11" style="width: 1em; height: 1em;" />',
-				esc_url( $flag['url'] ),
-				esc_attr( $lang['name'] )
-			);
-		}
+		$flag['src']  = $flag['url'];
+		return \PLL_Language::get_flag_html( $flag, '', $lang['name'] );
 	}
 
 	/**
@@ -656,51 +650,49 @@ class LSBG_Language_Switcher_Block {
 	 * @return string Current language slug.
 	 */
 	private function get_current_language_slug() {
-		// If Polylang is active, use its detection logic
-		if ( lsbg_is_polylang_active() && function_exists( 'pll_current_language' ) ) {
-			// Try to get post language in editor/REST context
-			global $post, $wp;
-			
-			$post_id = null;
+		if ( ! function_exists( 'pll_current_language' ) ) {
+			return '';
+		}
 
-			// Check if we're in a REST API request (editor context)
-			if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-				// Try to extract post ID from REST route
-				if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
-					// Match patterns like /wp/v2/posts/123 or /wp/v2/pages/123
-					if ( preg_match( '#/wp/v2/(?:posts|pages|[^/]+)/(\d+)#', $_SERVER['REQUEST_URI'], $matches ) ) {
-						$post_id = intval( $matches[1] );
-					}
-				}
+		// Try to get post language in editor/REST context
+		global $post, $wp;
+		
+		$post_id = null;
 
-				// Check $_GET for post_id
-				if ( ! $post_id && ! empty( $_GET['post_id'] ) ) {
-					$post_id = intval( $_GET['post_id'] );
-				}
-
-				// If we found a post ID, get its language
-				if ( $post_id && function_exists( 'pll_get_post_language' ) ) {
-					$lang = pll_get_post_language( $post_id );
-					if ( $lang ) {
-						return $lang;
-					}
+		// Check if we're in a REST API request (editor context)
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			// Try to extract post ID from REST route
+			if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
+				// Match patterns like /wp/v2/posts/123 or /wp/v2/pages/123
+				if ( preg_match( '#/wp/v2/(?:posts|pages|[^/]+)/(\d+)#', $_SERVER['REQUEST_URI'], $matches ) ) {
+					$post_id = intval( $matches[1] );
 				}
 			}
 
-			// If we have a post object and it has a language, use that
-			if ( isset( $post->ID ) && function_exists( 'pll_get_post_language' ) ) {
-				$lang = pll_get_post_language( $post->ID );
+			// Check $_GET for post_id
+			if ( ! $post_id && ! empty( $_GET['post_id'] ) ) {
+				$post_id = intval( $_GET['post_id'] );
+			}
+
+			// If we found a post ID, get its language
+			if ( $post_id && function_exists( 'pll_get_post_language' ) ) {
+				$lang = pll_get_post_language( $post_id );
 				if ( $lang ) {
 					return $lang;
 				}
 			}
-
-			// Fallback to pll_current_language() for frontend
-			return pll_current_language();
 		}
 
-		// Manual mode - use helper function
-		return lsbg_get_current_language();
+		// If we have a post object and it has a language, use that
+		if ( isset( $post->ID ) && function_exists( 'pll_get_post_language' ) ) {
+			$lang = pll_get_post_language( $post->ID );
+			if ( $lang ) {
+				return $lang;
+			}
+		}
+
+		// Fallback to pll_current_language() for frontend
+		return pll_current_language();
 	}
 
 	/**
@@ -710,9 +702,7 @@ class LSBG_Language_Switcher_Block {
 	 * @return string Block HTML.
 	 */
 	public function render_language_switcher_block( $attributes ) {
-		// Check if we have languages available (Polylang or manual)
-		$languages = lsbg_get_languages();
-		if ( empty( $languages ) ) {
+		if ( ! function_exists( 'pll_the_languages' ) ) {
 			return '';
 		}
 
@@ -739,6 +729,10 @@ class LSBG_Language_Switcher_Block {
 	 * @return string Block HTML.
 	 */
 	private function render_horizontal_vertical_layout( $attributes ) {
+		if ( ! function_exists( 'pll_the_languages' ) ) {
+			return '';
+		}
+
 		$layout                 = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
 		$show_names             = ! empty( $attributes['show_names'] );
 		$show_flags             = ! empty( $attributes['show_flags'] );
@@ -749,15 +743,17 @@ class LSBG_Language_Switcher_Block {
 		// Get current language slug (works in both frontend and editor contexts)
 		$current_lang_slug = $this->get_current_language_slug();
 		
-		// Get languages (works with both Polylang and manual mode)
-		$languages = lsbg_get_languages(
-			array(
-				'echo'       => 0,
-				'raw'        => 1,
-				'show_flags' => 0,
-				'show_names' => $show_names,
-			)
+
+		$args = array(
+			'echo'                   => 0,
+			'raw'                    => 1,
+			'show_flags'             => 0,
+			'show_names'             => $show_names,
+			'hide_current'           => false,
+			'hide_if_no_translation' => false,
 		);
+
+		$languages = pll_the_languages( $args );
 
 		if ( empty( $languages ) || ! is_array( $languages ) ) {
 			return '';
@@ -848,6 +844,10 @@ class LSBG_Language_Switcher_Block {
 	 * @return string Block HTML.
 	 */
 	private function render_custom_dropdown( $attributes ) {
+		if ( ! function_exists( 'pll_the_languages' ) ) {
+			return '';
+		}
+
 		$show_names             = ! empty( $attributes['show_names'] );
 		$show_flags             = ! empty( $attributes['show_flags'] );
 		$show_language_codes    = ! empty( $attributes['show_language_codes'] );
@@ -857,15 +857,17 @@ class LSBG_Language_Switcher_Block {
 		// Get current language slug (works in both frontend and editor contexts)
 		$current_lang_slug = $this->get_current_language_slug();
 
-		// Get languages (works with both Polylang and manual mode)
-		$languages = lsbg_get_languages(
-			array(
-				'echo'       => 0,
-				'raw'        => 1,
-				'show_flags' => 0,
-				'show_names' => $show_names,
-			)
+
+		$args = array(
+			'echo'                   => 0,
+			'raw'                    => 1,
+			'show_flags'             => 0,
+			'show_names'             => $show_names,
+			'hide_current'           => false,
+			'hide_if_no_translation' => false,
 		);
+
+		$languages = pll_the_languages( $args );
 
 		if ( empty( $languages ) || ! is_array( $languages ) ) {
 			return '';

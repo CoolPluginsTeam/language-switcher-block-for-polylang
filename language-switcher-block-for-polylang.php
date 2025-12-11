@@ -6,6 +6,7 @@
  * Version: 1.0.0
  * Requires at least: 5.0
  * Requires PHP: 7.2
+ * Requires Plugins: polylang
  * Author: Cool Plugins
  * Author URI: 
  * License: GPL2
@@ -28,6 +29,24 @@ define( 'LSBG_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 
 
+
+/**
+ * Auto-deactivate when Polylang is deactivated
+ */
+function lsbg_deactivate_with_polylang( $plugin ) {
+	// Check if Polylang or Polylang Pro is being deactivated
+	if ( 'polylang/polylang.php' === $plugin || 'polylang-pro/polylang.php' === $plugin ) {
+		if ( is_plugin_active( LSBG_PLUGIN_BASENAME ) ) {
+			deactivate_plugins( LSBG_PLUGIN_BASENAME );
+		}
+	}
+}
+add_action( 'deactivate_plugin', 'lsbg_deactivate_with_polylang' );
+
+// Only load plugin if Polylang is active
+// if ( ! lsbg_is_polylang_active() ) {
+// 	return;
+// }
 
 // Load helper functions
 require_once LSBG_PLUGIN_DIR . 'helpers/helper-functions.php';
