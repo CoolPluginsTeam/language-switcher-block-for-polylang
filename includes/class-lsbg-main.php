@@ -82,24 +82,7 @@ class LSBG_Language_Switcher_Block {
 	 * Load language switcher block
 	 */
 	public function load_blocks() {
-		if ( ! $this->check_polylang_dependency() ) {
-			return;
-		}
-
 		add_action( 'init', array( $this, 'register_language_switcher_block' ) );
-	}
-
-	/**
-	 * Check Polylang dependency
-	 *
-	 * @return bool
-	 */
-	private function check_polylang_dependency() {
-		if ( ! function_exists( 'PLL' ) && ! class_exists( 'Polylang' ) ) {
-			add_action( 'admin_notices', array( $this, 'polylang_missing_notice' ) );
-			return false;
-		}
-		return true;
 	}
 
 	/**
