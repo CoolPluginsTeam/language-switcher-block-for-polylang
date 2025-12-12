@@ -4,18 +4,25 @@
     var el = element.createElement;
     var registerBlockType = blocks.registerBlockType;
     var InspectorControls = blockEditor.InspectorControls;
+    var BlockControls = blockEditor.BlockControls;
+    var AlignmentToolbar = blockEditor.AlignmentToolbar;
     var PanelBody = components.PanelBody;
     var ToggleControl = components.ToggleControl;
     var SelectControl = components.SelectControl;
+    var TextControl = components.TextControl;
+    var Button = components.Button;
     var TabPanel = components.TabPanel;
     var BoxControl = components.__experimentalBoxControl || components.BoxControl;
     var RangeControl = components.RangeControl;
     var ColorPalette = components.ColorPalette;
+    var Notice = components.Notice;
     var ServerSideRender = serverSideRender;
     var __ = i18n.__;
+    var useState = element.useState;
+    var useEffect = element.useEffect;
 
     // Get settings from localized script
-    var settings = window.lsbgBlockSettings || { options: {} };
+    var settings = window.lsbgBlockSettings || { options: {}, languages: [], polylangActive: false };
 
     registerBlockType('lsbg/language-switcher', {
         title: __('Language Switcher block for Polylang', 'language-switcher-block-for-polylang'),
@@ -159,6 +166,18 @@
             textTransform: {
                 type: 'string',
                 default: 'none'
+            },
+            alignment: {
+                type: 'string',
+                default: 'left'
+            },
+            customLanguages: {
+                type: 'array',
+                default: []
+            },
+            languageSource: {
+                type: 'string',
+                default: 'polylang'
             }
         },
         supports: {
@@ -170,6 +189,53 @@
         edit: function (props) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
+
+            // Notice for invalid custom language selections (e.g. duplicates)
+            var duplicateLanguageNoticeState = useState(null);
+            var duplicateLanguageNotice = duplicateLanguageNoticeState[0];
+            var setDuplicateLanguageNotice = duplicateLanguageNoticeState[1];
+            
+            // State to track language source changes
+            var languageSourceState = useState(attributes.languageSource || 'polylang');
+            var previousLanguageSource = languageSourceState[0];
+            var setPreviousLanguageSource = languageSourceState[1];
+            
+            var showNoticeState = useState(false);
+            var showNotice = showNoticeState[0];
+            var setShowNotice = showNoticeState[1];
+            
+            // Helper function to validate URL
+            var isValidUrl = function(url) {
+                if (!url || url.trim() === '') {
+                    return false; // Empty URLs are not valid
+                }
+                // Check if it's a valid absolute URL (http:// or https://)
+                var absoluteUrlPattern = /^https?:\/\/.+/i;
+                // Check if it's a valid relative URL (starts with /)
+                var relativeUrlPattern = /^\/[^\s]*/;
+                
+                return absoluteUrlPattern.test(url) || relativeUrlPattern.test(url);
+            };
+
+            // Set languageSource to 'default' when Polylang is not active
+            if (!settings.polylangActive && attributes.languageSource === 'polylang') {
+                setAttributes({ 
+                    languageSource: 'default'
+                });
+            }
+
+            // Auto-populate English when using custom languages (either Polylang is not active OR languageSource is 'default')
+            var useCustomLanguages = !settings.polylangActive || attributes.languageSource === 'default';
+            if (useCustomLanguages && (!attributes.customLanguages || attributes.customLanguages.length === 0)) {
+                setAttributes({ 
+                    customLanguages: [
+                        { 
+                            language: 'en_US',
+                            url: ''
+                        }
+                    ] 
+                });
+            }
 
             // Helper function to create spacing control using BoxControl
             var createSpacingControl = function(label, type) {
@@ -268,6 +334,25 @@
                         ],
                         onChange: function(value) {
                             setAttributes({ textTransform: value });
+                        },
+                        __next40pxDefaultSize: true,
+                        __nextHasNoMarginBottom: true
+                    })
+                );
+
+                // Alignment Control (Left / Center / Right)
+                controls.push(
+                    el(SelectControl, {
+                        key: 'alignment',
+                        label: __('Alignment', 'language-switcher-block-for-polylang'),
+                        value: attributes.alignment || 'left',
+                        options: [
+                            { label: __('Left', 'language-switcher-block-for-polylang'), value: 'left' },
+                            { label: __('Center', 'language-switcher-block-for-polylang'), value: 'center' },
+                            { label: __('Right', 'language-switcher-block-for-polylang'), value: 'right' }
+                        ],
+                        onChange: function(value) {
+                            setAttributes({ alignment: value });
                         },
                         __next40pxDefaultSize: true,
                         __nextHasNoMarginBottom: true
@@ -484,10 +569,15 @@
 
             // Create controls for each option
             var controls = [];
+            var defaultTabControls = []; // Controls for Default tab (excludes hide_current and hide_if_no_translation)
+            
             for (var option in settings.options) {
                 if (settings.options.hasOwnProperty(option)) {
                     (function (opt) {
                         var optionData = settings.options[opt];
+                        
+                        // Skip these options for default tab controls
+                        var excludeFromDefault = opt === 'hide_current' || opt === 'hide_if_no_translation';
                         
                         // Check if this is a select control
                         if (optionData.type === 'select' && optionData.options) {
@@ -502,44 +592,95 @@
                                 }
                             }
                             
-                            controls.push(
-                                el(SelectControl, {
-                                    key: opt,
-                                    label: optionData.label,
-                                    value: attributes[opt],
-                                    options: selectOptions,
-                                    onChange: function (value) {
-                                        var newAttrs = {};
-                                        newAttrs[opt] = value;
-                                        setAttributes(newAttrs);
-                                    },
-                                    __next40pxDefaultSize: true,
-                                    __nextHasNoMarginBottom: true
-                                })
-                            );
+                            var selectControl = el(SelectControl, {
+                                key: opt,
+                                label: optionData.label,
+                                value: attributes[opt],
+                                options: selectOptions,
+                                onChange: function (value) {
+                                    var newAttrs = {};
+                                    newAttrs[opt] = value;
+                                    setAttributes(newAttrs);
+                                },
+                                __next40pxDefaultSize: true,
+                                __nextHasNoMarginBottom: true
+                            });
+                            
+                            controls.push(selectControl);
+                            if (!excludeFromDefault) {
+                                defaultTabControls.push(selectControl);
+                            }
                         } else {
                             // Default to ToggleControl for boolean options
-                            controls.push(
-                                el(ToggleControl, {
-                                    key: opt,
-                                    label: optionData.label,
-                                    checked: attributes[opt],
-                                    onChange: function (value) {
-                                        var newAttrs = {};
-                                        newAttrs[opt] = value;
-                                        setAttributes(newAttrs);
-                                    },
-                                    __nextHasNoMarginBottom: true
-                                })
-                            );
+                            var toggleControl = el(ToggleControl, {
+                                key: opt,
+                                label: optionData.label,
+                                checked: attributes[opt],
+                                onChange: function (value) {
+                                    var newAttrs = {};
+                                    newAttrs[opt] = value;
+                                    setAttributes(newAttrs);
+                                },
+                                __nextHasNoMarginBottom: true
+                            });
+                            
+                            controls.push(toggleControl);
+                            if (!excludeFromDefault) {
+                                defaultTabControls.push(toggleControl);
+                            }
                         }
                     })(option);
                 }
             }
 
+            // Build tabs array
+            var tabsArray = [];
+
+            // If Polylang is active, show "Language Source" tab with dropdown
+            // If not active, show "Default" tab
+            if (settings.polylangActive) {
+                tabsArray.push({
+                    name: 'language-source',
+                    title: __('Language Source', 'language-switcher-block-for-polylang'),
+                    className: 'lsbg-language-source-tab'
+                });
+            } else {
+                tabsArray.push({
+                    name: 'default',
+                    title: __('Default', 'language-switcher-block-for-polylang'),
+                    className: 'lsbg-default-tab'
+                });
+            }
+
+            // Always add Styles tab
+            tabsArray.push({
+                name: 'styles',
+                title: __('Styles', 'language-switcher-block-for-polylang'),
+                className: 'lsbg-styles-tab'
+            });
+
+            // Set initial tab
+            var initialTab = settings.polylangActive ? 'language-source' : 'default';
+
             return el(
                 'div',
                 {},
+                el(
+                    BlockControls,
+                    {},
+                    AlignmentToolbar ? el(AlignmentToolbar, {
+                        value: attributes.alignment || 'left',
+                        onChange: function (nextAlign) {
+                            // AlignmentToolbar can return undefined when cleared.
+                            var value = nextAlign || 'left';
+                            // Allow only left/center/right for this block.
+                            if (value !== 'left' && value !== 'center' && value !== 'right') {
+                                value = 'left';
+                            }
+                            setAttributes({ alignment: value });
+                        }
+                    }) : null
+                ),
                 el(
                     InspectorControls,
                     {},
@@ -548,21 +689,136 @@
                         {
                             className: 'lsbg-inspector-tabs',
                             activeClass: 'active-tab',
-                            tabs: [
-                                {
-                                    name: 'settings',
-                                    title: __('Settings', 'language-switcher-block-for-polylang'),
-                                    className: 'lsbg-settings-tab'
-                                },
-                                {
-                                    name: 'styles',
-                                    title: __('Styles', 'language-switcher-block-for-polylang'),
-                                    className: 'lsbg-styles-tab'
-                                }
-                            ]
+                            initialTabName: initialTab,
+                            tabs: tabsArray
                         },
                         function (tab) {
-                            if (tab.name === 'settings') {
+                            // Helper function to render default language settings
+                            var renderDefaultSettings = function() {
+                                var customLanguages = attributes.customLanguages || [];
+                                var selectedLanguages = customLanguages
+                                    .map(function (l) { return l && l.language ? l.language : ''; })
+                                    .filter(function (v) { return !!v; });
+                                
+                                var hasValidationErrors = false;
+                                var repeaterItems = customLanguages.map(function(item, index) {
+                                    var currentValue = item.language || '';
+                                    var currentUrl = item.url || '';
+                                    var isUrlValid = isValidUrl(currentUrl);
+                                    
+                                    if (!isUrlValid) {
+                                        hasValidationErrors = true;
+                                    }
+                                    
+                                    var availableLanguageOptions = (settings.languages || []).filter(function (opt) {
+                                        // Keep the currently selected option visible, but prevent selecting a language twice.
+                                        if (!opt || !opt.value) return true;
+                                        return opt.value === currentValue || selectedLanguages.indexOf(opt.value) === -1;
+                                    });
+                                    return el(
+                                        'div',
+                                        {
+                                            key: index,
+                                            style: {
+                                                border: '1px solid #ddd',
+                                                padding: '12px',
+                                                marginBottom: '12px',
+                                                borderRadius: '4px',
+                                                backgroundColor: '#f9f9f9'
+                                            }
+                                        },
+                                        el(SelectControl, {
+                                            label: __('Language', 'language-switcher-block-for-polylang'),
+                                            value: item.language || '',
+                                            options: [
+                                                { label: __('Select Language', 'language-switcher-block-for-polylang'), value: '' }
+                                            ].concat(availableLanguageOptions),
+                                            onChange: function(value) {
+                                                // Prevent selecting the same language twice.
+                                                var isDuplicate = value && customLanguages.some(function (l, idx) {
+                                                    return idx !== index && l && l.language === value;
+                                                });
+                                                if (isDuplicate) {
+                                                    setDuplicateLanguageNotice(__('This language is already added. Please choose another one.', 'language-switcher-block-for-polylang'));
+                                                    return;
+                                                }
+                                                setDuplicateLanguageNotice(null);
+                                                var newLanguages = customLanguages.slice();
+                                                newLanguages[index].language = value;
+                                                setAttributes({ customLanguages: newLanguages });
+                                            },
+                                            __next40pxDefaultSize: true,
+                                            __nextHasNoMarginBottom: true
+                                        }),
+                                        el(TextControl, {
+                                            label: __('Page URL', 'language-switcher-block-for-polylang'),
+                                            value: item.url || '',
+                                            onChange: function(value) {
+                                                var newLanguages = customLanguages.slice();
+                                                newLanguages[index].url = value;
+                                                setAttributes({ customLanguages: newLanguages });
+                                            },
+                                            placeholder: 'https://example.com/page',
+                                            help: !isUrlValid ? __('Please enter a valid URL', 'language-switcher-block-for-polylang') : '',
+                                            className: !isUrlValid ? 'lsbg-url-error' : '',
+                                            __next40pxDefaultSize: true,
+                                            __nextHasNoMarginBottom: false
+                                        }),
+                                        el(Button, {
+                                            isDestructive: true,
+                                            isSmall: true,
+                                            onClick: function() {
+                                                var newLanguages = customLanguages.slice();
+                                                newLanguages.splice(index, 1);
+                                                setAttributes({ customLanguages: newLanguages });
+                                            },
+                                            style: { marginTop: '8px' }
+                                        }, __('Remove', 'language-switcher-block-for-polylang'))
+                                    );
+                                });
+
+                                return [
+                                    el(
+                                        PanelBody,
+                                        {
+                                            key: 'custom-languages',
+                                            title: __('Custom Language Links', 'language-switcher-block-for-polylang'),
+                                            initialOpen: true
+                                        },
+                                        duplicateLanguageNotice && el(Notice, {
+                                            status: 'error',
+                                            isDismissible: true,
+                                            onRemove: function () {
+                                                setDuplicateLanguageNotice(null);
+                                            },
+                                            style: { marginBottom: '12px' }
+                                        }, duplicateLanguageNotice),
+                                        el('div', {}, repeaterItems),
+                                        el(Button, {
+                                            isPrimary: true,
+                                            disabled: hasValidationErrors,
+                                            onClick: function() {
+                                                setDuplicateLanguageNotice(null);
+                                                var newLanguages = customLanguages.slice();
+                                                newLanguages.push({ language: '', url: '' });
+                                                setAttributes({ customLanguages: newLanguages });
+                                            }
+                                        }, __('Add Language', 'language-switcher-block-for-polylang'))
+                                    ),
+                                    el(
+                                        PanelBody,
+                                        {
+                                            key: 'display-settings',
+                                            title: __('Display Settings', 'language-switcher-block-for-polylang'),
+                                            initialOpen: true
+                                        },
+                                        defaultTabControls
+                                    )
+                                ];
+                            };
+
+                            // Helper function to render Polylang settings
+                            var renderPolylangSettings = function() {
                                 return el(
                                     PanelBody,
                                     {
@@ -571,7 +827,70 @@
                                     },
                                     controls
                                 );
+                            };
+
+                            if (tab.name === 'default') {
+                                // When Polylang is not active, show default settings directly
+                                return renderDefaultSettings();
                             }
+                            
+                            if (tab.name === 'language-source') {
+                                // When Polylang is active, show dropdown and content based on selection
+                                var sourceContent = [];
+                                
+                                // Add dropdown to select between Default and Polylang
+                                sourceContent.push(
+                                    el(
+                                        PanelBody,
+                                        {
+                                            key: 'language-source-selector',
+                                            title: __('Select Language Source', 'language-switcher-block-for-polylang'),
+                                            initialOpen: true
+                                        },
+                                        el(SelectControl, {
+                                            label: __('Language Source', 'language-switcher-block-for-polylang'),
+                                            value: attributes.languageSource || 'polylang',
+                                            options: [
+                                                { label: __('Polylang', 'language-switcher-block-for-polylang'), value: 'polylang' },
+                                                { label: __('Default (Custom Languages)', 'language-switcher-block-for-polylang'), value: 'default' }
+                                            ],
+                                            onChange: function(value) {
+                                                // Check if the value has actually changed
+                                                if (value !== previousLanguageSource) {
+                                                    setPreviousLanguageSource(value);
+                                                    setShowNotice(true);
+                                                }
+                                                setAttributes({ languageSource: value });
+                                            },
+                                            help: __('Choose whether to use Polylang languages or custom language links', 'language-switcher-block-for-polylang'),
+                                            __next40pxDefaultSize: true,
+                                            __nextHasNoMarginBottom: true
+                                        }),
+                                        showNotice && el(Notice, {
+                                            status: 'warning',
+                                            isDismissible: true,
+                                            onRemove: function() {
+                                                setShowNotice(false);
+                                            },
+                                            style: { marginTop: '12px' }
+                                        }, 
+                                        'You have switched the custom language source to ' + 
+                                        (attributes.languageSource === 'polylang' ? 'Polylang' : 'Default (Custom Languages)') + 
+                                        '. Kindly verify all changes before updating the page.'
+                                        )
+                                    )
+                                );
+                                
+                                // Render content based on selected source
+                                if (attributes.languageSource === 'default') {
+                                    sourceContent = sourceContent.concat(renderDefaultSettings());
+                                } else {
+                                    sourceContent.push(renderPolylangSettings());
+                                }
+                                
+                                return sourceContent;
+                            }
+                            
                             if (tab.name === 'styles') {
                                 var stylePanels = [
                                     el(

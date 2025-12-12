@@ -19,20 +19,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Define plugin constants
+/**
+ * Define plugin constants
+ */
 define( 'LSBG_VERSION', '1.0.0' );
 define( 'LSBG_PLUGIN_NAME', 'Language Switcher Block for Polylang' );
 define( 'LSBG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LSBG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LSBG_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
-
-
-// Load helper functions
+/**
+ * Load required files
+ */
 require_once LSBG_PLUGIN_DIR . 'helpers/helper-functions.php';
-
-// Load main class
 require_once LSBG_PLUGIN_DIR . 'includes/class-lsbg-main.php';
 
-// Initialize the plugin
+/**
+ * Initialize the plugin
+ * Get the singleton instance and start the plugin
+ */
 LSBG_Language_Switcher_Block::get_instance();
