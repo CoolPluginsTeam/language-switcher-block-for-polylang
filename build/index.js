@@ -841,7 +841,7 @@
                                             },
                                             style: { marginTop: '12px' }
                                         }, 
-                                        'You have switched the custom language source to ' + 
+                                        'You have switched the language source to ' + 
                                         (attributes.languageSource === 'polylang' ? 'Polylang' : 'Default (Custom Languages)') + 
                                         '. Kindly verify all changes before updating the page.'
                                         )
