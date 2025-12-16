@@ -762,7 +762,7 @@
                                             help: !isUrlValid ? __('Please enter a valid URL', 'language-switcher-block-for-polylang') : '',
                                             className: !isUrlValid ? 'lsbg-url-error' : '',
                                             __next40pxDefaultSize: true,
-                                            __nextHasNoMarginBottom: false
+                                            __nextHasNoMarginBottom: true
                                         }),
                                         el(Button, {
                                             isDestructive: true,
