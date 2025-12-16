@@ -25,8 +25,8 @@
     var settings = window.lsbgBlockSettings || { options: {}, languages: [], polylangActive: false };
 
     registerBlockType('lsbg/language-switcher', {
-        title: __('Language Switcher block for Polylang', 'language-switcher-block-for-polylang'),
-        description: __('Display a language switcher for Polylang', 'language-switcher-block-for-polylang'),
+        title: __('Language Switcher block', 'language-switcher-block-for-polylang'),
+        description: __('Display a language switcher block', 'language-switcher-block-for-polylang'),
         category: 'widgets',
         icon: 'translation',
         keywords: [
@@ -57,7 +57,7 @@
             },
             dropdown: {
                 type: 'string',
-                default: 'vertical'
+                default: 'dropdown'
             },
             marginTop: {
                 type: 'number',
@@ -203,19 +203,6 @@
             var showNoticeState = useState(false);
             var showNotice = showNoticeState[0];
             var setShowNotice = showNoticeState[1];
-            
-            // Helper function to validate URL
-            var isValidUrl = function(url) {
-                if (!url || url.trim() === '') {
-                    return false; // Empty URLs are not valid
-                }
-                // Check if it's a valid absolute URL (http:// or https://)
-                var absoluteUrlPattern = /^https?:\/\/.+/i;
-                // Check if it's a valid relative URL (starts with /)
-                var relativeUrlPattern = /^\/[^\s]*/;
-                
-                return absoluteUrlPattern.test(url) || relativeUrlPattern.test(url);
-            };
 
             // Set languageSource to 'default' when Polylang is not active
             if (!settings.polylangActive && attributes.languageSource === 'polylang') {
@@ -224,14 +211,16 @@
                 });
             }
 
-            // Auto-populate English when using custom languages (either Polylang is not active OR languageSource is 'default')
+            // Auto-populate English and French when using custom languages (either Polylang is not active OR languageSource is 'default')
             var useCustomLanguages = !settings.polylangActive || attributes.languageSource === 'default';
             if (useCustomLanguages && (!attributes.customLanguages || attributes.customLanguages.length === 0)) {
                 setAttributes({ 
                     customLanguages: [
                         { 
-                            language: 'en_US',
-                            url: ''
+                            language: 'en_US'
+                        },
+                        { 
+                            language: 'fr_FR'
                         }
                     ] 
                 });
@@ -700,15 +689,8 @@
                                     .map(function (l) { return l && l.language ? l.language : ''; })
                                     .filter(function (v) { return !!v; });
                                 
-                                var hasValidationErrors = false;
                                 var repeaterItems = customLanguages.map(function(item, index) {
                                     var currentValue = item.language || '';
-                                    var currentUrl = item.url || '';
-                                    var isUrlValid = isValidUrl(currentUrl);
-                                    
-                                    if (!isUrlValid) {
-                                        hasValidationErrors = true;
-                                    }
                                     
                                     var availableLanguageOptions = (settings.languages || []).filter(function (opt) {
                                         // Keep the currently selected option visible, but prevent selecting a language twice.
@@ -750,20 +732,6 @@
                                             __next40pxDefaultSize: true,
                                             __nextHasNoMarginBottom: true
                                         }),
-                                        el(TextControl, {
-                                            label: __('Page URL', 'language-switcher-block-for-polylang'),
-                                            value: item.url || '',
-                                            onChange: function(value) {
-                                                var newLanguages = customLanguages.slice();
-                                                newLanguages[index].url = value;
-                                                setAttributes({ customLanguages: newLanguages });
-                                            },
-                                            placeholder: 'https://example.com/page',
-                                            help: !isUrlValid ? __('Please enter a valid URL', 'language-switcher-block-for-polylang') : '',
-                                            className: !isUrlValid ? 'lsbg-url-error' : '',
-                                            __next40pxDefaultSize: true,
-                                            __nextHasNoMarginBottom: true
-                                        }),
                                         el(Button, {
                                             isDestructive: true,
                                             isSmall: true,
@@ -796,11 +764,10 @@
                                         el('div', {}, repeaterItems),
                                         el(Button, {
                                             isPrimary: true,
-                                            disabled: hasValidationErrors,
                                             onClick: function() {
                                                 setDuplicateLanguageNotice(null);
                                                 var newLanguages = customLanguages.slice();
-                                                newLanguages.push({ language: '', url: '' });
+                                                newLanguages.push({ language: '' });
                                                 setAttributes({ customLanguages: newLanguages });
                                             }
                                         }, __('Add Language', 'language-switcher-block-for-polylang'))

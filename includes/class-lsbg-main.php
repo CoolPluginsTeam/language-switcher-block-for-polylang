@@ -219,12 +219,12 @@ class LSBG_Language_Switcher_Block {
 				'label'   => __( 'Hides languages with no translation', 'language-switcher-block-for-polylang' ),
 				'default' => 0,
 			),
-			'dropdown'               => array(
-				'label'   => __( 'Layout', 'language-switcher-block-for-polylang' ),
-				'type'    => 'select',
-				'default' => 'vertical',
-				'options' => array(
-					'dropdown'   => __( 'Dropdown', 'language-switcher-block-for-polylang' ),
+		'dropdown'               => array(
+			'label'   => __( 'Layout', 'language-switcher-block-for-polylang' ),
+			'type'    => 'select',
+			'default' => 'dropdown',
+			'options' => array(
+				'dropdown'   => __( 'Dropdown', 'language-switcher-block-for-polylang' ),
 					'vertical'   => __( 'Vertical', 'language-switcher-block-for-polylang' ),
 					'horizontal' => __( 'Horizontal', 'language-switcher-block-for-polylang' ),
 				),
@@ -772,12 +772,12 @@ class LSBG_Language_Switcher_Block {
 		}
 		
 		// If language source is 'polylang', use Polylang
-		if ( ! function_exists( 'pll_the_languages' ) ) {
-			// If Polylang is not available, fall back to default language
-			return $this->render_default_language( $attributes );
-		}
+	if ( ! function_exists( 'pll_the_languages' ) ) {
+		// If Polylang is not available, fall back to default language
+		return $this->render_default_language( $attributes );
+	}
 
-		$layout              = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
+	$layout              = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'dropdown';
 		$show_names          = ! empty( $attributes['show_names'] );
 		$show_flags          = ! empty( $attributes['show_flags'] );
 		$show_language_codes = ! empty( $attributes['show_language_codes'] );
@@ -821,12 +821,12 @@ class LSBG_Language_Switcher_Block {
 				'slug'   => 'en',
 				'name'   => 'English',
 				'url'    => $current_url,
-				'flag'   => 'us',
-				'locale' => 'en_US',
-			),
-		);
+			'flag'   => 'us',
+			'locale' => 'en_US',
+		),
+	);
 
-		$layout = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
+	$layout = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'dropdown';
 
 		// Use existing rendering methods.
 		if ( 'dropdown' === $layout ) {
@@ -913,12 +913,12 @@ class LSBG_Language_Switcher_Block {
 
 		// Convert custom languages to Polylang format
 		$languages = $this->convert_custom_languages_to_polylang_format( $custom_languages );
-		
-		if ( empty( $languages ) ) {
-			return '';
-		}
+	
+	if ( empty( $languages ) ) {
+		return '';
+	}
 
-		$layout = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
+	$layout = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'dropdown';
 
 		// Use existing rendering methods
 		if ( 'dropdown' === $layout ) {
@@ -990,8 +990,8 @@ class LSBG_Language_Switcher_Block {
 	 * @param string $current_lang_slug Optional current language slug.
 	 * @return string Block HTML.
 	 */
-	private function render_list_layout( $attributes, $languages, $current_lang_slug = null ) {
-		$layout              = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'vertical';
+private function render_list_layout( $attributes, $languages, $current_lang_slug = null ) {
+	$layout              = isset( $attributes['dropdown'] ) ? $attributes['dropdown'] : 'dropdown';
 		$show_names          = ! empty( $attributes['show_names'] );
 		$show_flags          = ! empty( $attributes['show_flags'] );
 		$show_language_codes = ! empty( $attributes['show_language_codes'] );
